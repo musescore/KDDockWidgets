@@ -13,6 +13,7 @@
 #define KD_DRAGCONTROLLER_P_H
 
 #include "kddockwidgets/docks_export.h"
+#include "kddockwidgets/KDDockWidgets.h"
 
 #include "WindowBeingDragged_p.h"
 #include "core/EventFilterInterface.h"
@@ -29,6 +30,8 @@
 class TestQtWidgets;
 
 namespace KDDockWidgets {
+
+class ContextData;
 
 namespace Core {
 
@@ -89,7 +92,14 @@ public:
     };
     Q_ENUM(State)
 
-    static DragController *instance();
+    static DragController *instance(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    );
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int ctx() const { return m_ctx; }
+#endif
 
     // Registers something that wants to be able to be dragged
     void registerDraggable(Draggable *);
@@ -154,8 +164,15 @@ private:
     friend class StateDropped;
     friend class StateDraggingWayland;
     friend class ::TestQtWidgets;
-
-    explicit DragController(Core::Object * = nullptr);
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    friend class KDDockWidgets::ContextData;
+    const int m_ctx;
+#endif
+    explicit DragController(Core::Object * = nullptr
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                            , int ctx = 0
+#endif
+    );
     std::shared_ptr<Core::View> qtTopLevelUnderCursor() const;
     Core::Draggable *draggableForView(Core::View *) const;
     bool onDnDEvent(Core::View *, Event *) override;

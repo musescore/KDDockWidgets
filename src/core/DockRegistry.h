@@ -32,6 +32,7 @@
  */
 namespace KDDockWidgets {
 
+class ContextData;
 
 namespace Core {
 class FloatingWindow;
@@ -64,7 +65,11 @@ public:
     };
     Q_DECLARE_FLAGS(DockByNameFlags, DockByNameFlag)
 
-    static DockRegistry *self();
+    static DockRegistry *self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    );
     static bool isInitialized();
 
     ~DockRegistry() override;
@@ -237,10 +242,14 @@ public:
 private:
     friend class Core::FocusScope;
     friend class Core::TitleBar;
-
-    static DockRegistry *self(bool create);
-
-    explicit DockRegistry(Core::Object *parent = nullptr);
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    friend class ContextData;
+#endif
+    explicit DockRegistry(Core::Object *parent = nullptr
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                          , int ctx = 0
+#endif
+    );
     bool onDockWidgetPressed(Core::DockWidget *dw, MouseEvent *);
     void onFocusedViewChanged(std::shared_ptr<Core::View> view);
     void maybeDelete();
@@ -255,6 +264,9 @@ private:
     void removeSideBarGrouping(const QVector<Core::DockWidget *> &);
     QVector<Core::DockWidget *> sideBarGroupingFor(Core::DockWidget *) const;
 
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    const int m_ctx;
+#endif
     Private *const d;
 
     QVector<Core::DockWidget *> m_dockWidgets;

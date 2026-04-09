@@ -13,6 +13,10 @@
 #include "DockRegistry_p.h"
 #include "DelayedCall_p.h"
 #include "Config.h"
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+#include "core/ContextData.h"
+#endif
+
 #include "core/Logging_p.h"
 #include "core/Position_p.h"
 #include "core/Utils_p.h"
@@ -58,8 +62,15 @@ private:
 
 }
 
-DockRegistry::DockRegistry(Core::Object *parent)
+DockRegistry::DockRegistry(Core::Object *parent
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                           , int ctx
+#endif
+)
     : Core::Object(parent)
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    , m_ctx(ctx)
+#endif
     , d(new Private())
     , m_sideBarGroupings(new SideBarGroupings())
 {
@@ -79,6 +90,11 @@ DockRegistry::~DockRegistry()
 
 void DockRegistry::maybeDelete()
 {
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    // Lifetime is managed by ContextData - don't self-delete.
+    return;
+#endif
+
     // We delete the singleton just to make LSAN happy.
     // We could also simply ask the user do call something like KDDockWidgets::deinit() in the future,
     // Also, please don't change this to be deleted at static dtor time with Q_GLOBAL_STATIC.
@@ -102,7 +118,12 @@ void DockRegistry::onFocusedViewChanged(std::shared_ptr<View> view)
         }
 
         if (auto dw = p->asDockWidgetController()) {
-            DockRegistry::self()->setFocusedDockWidget(dw);
+            DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                m_ctx
+#endif
+                )->setFocusedDockWidget(dw);
+            setFocusedDockWidget(dw);
             return;
         }
         p = p->parentView();
@@ -298,25 +319,32 @@ bool DockRegistry::itemIsInMainWindow(const Item *item) const
     return false;
 }
 
-DockRegistry *DockRegistry::self(bool create)
-{
-    static ObjectGuard<DockRegistry> s_dockRegistry;
+#ifndef KDDOCKWIDGETS_CONTEXT_SUPPORT
+static ObjectGuard<DockRegistry> s_dockRegistry;
+#endif
 
-    if (create && !s_dockRegistry) {
+DockRegistry *DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int ctx
+#endif
+)
+{
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    return ContextData::context(ctx)->dockRegistry;
+#else
+    if (!s_dockRegistry)
         s_dockRegistry = new DockRegistry();
-    }
-
     return s_dockRegistry;
-}
-
-DockRegistry *DockRegistry::self()
-{
-    return self(true);
+#endif
 }
 
 bool DockRegistry::isInitialized()
 {
-    return self(false);
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    return ContextData::hasContext(0);
+#else
+    return !!s_dockRegistry;
+#endif
 }
 
 void DockRegistry::registerDockWidget(Core::DockWidget *dock)
@@ -427,7 +455,11 @@ Core::DockWidget *DockRegistry::dockByName(const QString &name, DockByNameFlags 
 
     if (flags.testFlag(DockByNameFlag::CreateIfNotFound)) {
         // DockWidget doesn't exist, ask to create it
-        if (auto factoryFunc = Config::self().dockWidgetFactoryFunc()) {
+        if (auto factoryFunc = Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                m_ctx
+#endif
+                ).dockWidgetFactoryFunc()) {
             auto dw = factoryFunc(name);
             if (dw && dw->uniqueName() != name) {
                 // Very special case
@@ -711,7 +743,11 @@ bool DockRegistry::onMouseButtonPress(View *view, MouseEvent *event)
     }
 
     // The following code is for hididng the overlay
-    if (!(Config::self().flags() & Config::Flag_TitleBarShowAutoHide))
+    if (!(Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+              m_ctx
+#endif
+              ).flags() & Config::Flag_TitleBarShowAutoHide))
         return false;
 
     if (view->is(ViewType::Group)) {

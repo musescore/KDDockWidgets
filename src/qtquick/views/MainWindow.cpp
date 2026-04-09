@@ -56,8 +56,16 @@ public:
 
 
 MainWindow::MainWindow(const QString &uniqueName, MainWindowOptions options,
-                       QQuickItem *parent, Qt::WindowFlags flags)
-    : View(new Core::MainWindow(this, uniqueName, options), Core::ViewType::MainWindow, parent,
+                       QQuickItem *parent, Qt::WindowFlags flags
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                       , int ctx
+#endif
+)
+    : View(new Core::MainWindow(this, uniqueName, options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                                , ctx
+#endif
+          ), Core::ViewType::MainWindow, parent,
            flags)
     , MainWindowViewInterface(static_cast<Core::MainWindow *>(View::controller()))
     , d(new Private(this))

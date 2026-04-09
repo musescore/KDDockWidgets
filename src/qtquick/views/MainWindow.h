@@ -48,7 +48,11 @@ public:
     ///@param parent Visual parent item.
     ///@param flags Window flags to pass to top-level window, in case we're constructing it too
     explicit MainWindow(const QString &uniqueName, MainWindowOptions options = {},
-                        QQuickItem *parent = nullptr, Qt::WindowFlags flags = {});
+                        QQuickItem *parent = nullptr, Qt::WindowFlags flags = {}
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                        , int ctx = 0
+#endif
+    );
 
     ~MainWindow() override;
 

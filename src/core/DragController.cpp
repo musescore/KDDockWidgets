@@ -14,6 +14,10 @@
 #include "Utils_p.h"
 #include "WidgetResizeHandler_p.h"
 #include "Config.h"
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+#include "ContextData.h"
+#endif
+
 #include "WindowZOrder_x11_p.h"
 
 #include "core/DockRegistry.h"
@@ -604,8 +608,15 @@ StateDragging *createDraggingState(DragController *parent)
 
 }
 
-DragController::DragController(Core::Object *parent)
+DragController::DragController(Core::Object *parent
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                               , int ctx
+#endif
+)
     : MinimalStateMachine(parent)
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    , m_ctx(ctx)
+#endif
     , m_stateNone(new StateNone(this))
     , m_statePreDrag(new StatePreDrag(this))
     , m_stateDragging(createDraggingState(this))
@@ -629,10 +640,18 @@ DragController::DragController(Core::Object *parent)
     setCurrentState(m_stateNone);
 }
 
-DragController *DragController::instance()
+DragController *DragController::instance(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int ctx
+#endif
+)
 {
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    return ContextData::context(ctx)->dragController;
+#else
     static DragController dragController;
     return &dragController;
+#endif
 }
 
 void DragController::registerDraggable(Draggable *drg)

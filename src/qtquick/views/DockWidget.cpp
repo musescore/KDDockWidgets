@@ -55,8 +55,16 @@ public:
 
 DockWidget::DockWidget(const QString &uniqueName, DockWidgetOptions options,
                        LayoutSaverOptions layoutSaverOptions,
-                       Qt::WindowFlags windowFlags, QQmlEngine *engine)
-    : View(new Core::DockWidget(this, uniqueName, options, layoutSaverOptions), Core::ViewType::DockWidget,
+                       Qt::WindowFlags windowFlags, QQmlEngine *engine
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                       , int ctx
+#endif
+)
+    : View(new Core::DockWidget(this, uniqueName, options, layoutSaverOptions
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                                , ctx
+#endif
+          ), Core::ViewType::DockWidget,
            nullptr, windowFlags)
     , Core::DockWidgetViewInterface(asDockWidgetController())
     , d(new Private(this, engine ? engine : plat()->qmlEngine()))

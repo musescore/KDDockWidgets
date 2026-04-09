@@ -73,7 +73,11 @@ public:
      * when visible, or stays without a parent when hidden.
      */
     explicit DockWidget(View *view, const QString &uniqueName, DockWidgetOptions options = {},
-                        LayoutSaverOptions layoutSaverOptions = {});
+                        LayoutSaverOptions layoutSaverOptions = {}
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                        , int ctx = 0
+#endif
+    );
 
     ///@brief destructor
     ~DockWidget() override;

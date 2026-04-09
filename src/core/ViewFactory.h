@@ -57,7 +57,16 @@ class DOCKS_EXPORT ViewFactory : public Core::Object
 {
     Q_OBJECT
 public:
-    ViewFactory() = default;
+    explicit ViewFactory(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    )
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        : m_ctx(ctx)
+#endif
+    {
+    }
 
     ///@brief Destructor.
     /// Don't delete ViewFactory directly, it's owned by the framework.
@@ -144,6 +153,11 @@ public:
 
     /// @ The drop indicator type
     static DropIndicatorType s_dropIndicatorType;
+
+protected:
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    const int m_ctx;
+#endif
 
 private:
     KDDW_DELETE_COPY_CTOR(ViewFactory)

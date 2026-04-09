@@ -328,7 +328,11 @@ public:
         KDDW_DELETE_COPY_CTOR(RAIIIsRestoring)
     };
 
-    explicit Private(RestoreOptions options);
+    explicit Private(RestoreOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                     , int ctx
+#endif
+                     );
 
     static void restorePendingPositions(Core::DockWidget *);
 

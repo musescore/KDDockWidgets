@@ -52,7 +52,7 @@ inline bool isWindows()
 
 inline bool usesNativeTitleBar()
 {
-    return Config::self().flags() & Config::Flag_NativeTitleBar;
+    return Config::self(0).flags() & Config::Flag_NativeTitleBar;
 }
 
 inline bool usesClientTitleBar()
@@ -69,7 +69,7 @@ inline bool usesClientTitleBar()
 
 inline bool usesAeroSnapWithCustomDecos()
 {
-    return Config::self().flags() & Config::Flag_AeroSnapWithClientDecos;
+    return Config::self(0).flags() & Config::Flag_AeroSnapWithClientDecos;
 }
 
 inline bool usesNativeDraggingAndResizing()

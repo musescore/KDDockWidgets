@@ -64,7 +64,11 @@ class DOCKS_EXPORT MainWindow : public Controller
 public:
     typedef Vector<MainWindow *> List;
 
-    explicit MainWindow(View *view, const QString &uniqueName, MainWindowOptions options);
+    explicit MainWindow(View *view, const QString &uniqueName, MainWindowOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                        , int ctx = 0
+#endif
+    );
 
     ~MainWindow() override;
 

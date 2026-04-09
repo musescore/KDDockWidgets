@@ -51,9 +51,17 @@ static Layout *createLayout(MainWindow *mainWindow, MainWindowOptions options)
     return new DropArea(mainWindow->view(), options);
 }
 
-MainWindow::MainWindow(View *view, const QString &uniqueName, MainWindowOptions options)
+MainWindow::MainWindow(View *view, const QString &uniqueName, MainWindowOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                       , int ctx
+#endif
+)
     : Controller(ViewType::MainWindow, view)
-    , d(new Private(this, uniqueName, options))
+    , d(new Private(this, uniqueName, options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                    , ctx
+#endif
+    ))
 {
 }
 
@@ -77,7 +85,11 @@ void MainWindow::init(const QString &name)
 
 MainWindow::~MainWindow()
 {
-    DockRegistry::self()->unregisterMainWindow(this);
+    DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->unregisterMainWindow(this);
     delete d;
 }
 
@@ -86,7 +98,11 @@ void MainWindow::addDockWidgetAsTab(Core::DockWidget *widget)
     assert(widget);
     KDDW_DEBUG("dock={}", ( void * )widget);
 
-    if (!DockRegistry::self()->affinitiesMatch(d->affinities, widget->affinities())) {
+    if (!DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->affinitiesMatch(d->affinities, widget->affinities())) {
         KDDW_ERROR("Refusing to dock widget with incompatible affinity. {} {}", widget->affinities(), affinities());
         return;
     }
@@ -726,7 +742,11 @@ void MainWindow::setUniqueName(const QString &uniqueName)
     if (d->name.isEmpty()) {
         d->name = uniqueName;
         d->uniqueNameChanged.emit();
-        DockRegistry::self()->registerMainWindow(this);
+        DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->registerMainWindow(this);
     } else {
         KDDW_ERROR("Already has a name. {} {}", this->uniqueName(), uniqueName);
     }
@@ -756,7 +776,11 @@ bool MainWindow::deserialize(const LayoutSaver::MainWindow &mw)
         const Vector<QString> dockWidgets = mw.dockWidgetsForSideBar(loc);
         for (const QString &uniqueName : dockWidgets) {
 
-            Core::DockWidget *dw = DockRegistry::self()->dockByName(
+            Core::DockWidget *dw = DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->dockByName(
                 uniqueName, DockRegistry::DockByNameFlag::CreateIfNotFound);
             if (!dw) {
                 KDDW_ERROR("Could not find dock widget {} . Won't restore it to sidebar", uniqueName);

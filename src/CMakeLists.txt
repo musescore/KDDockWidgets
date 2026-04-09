@@ -337,6 +337,11 @@ else()
     target_compile_definitions(kddockwidgets PRIVATE BUILDING_DOCKS_LIBRARY)
 endif()
 
+if(KDDockWidgets_CONTEXT_SUPPORT)
+    target_sources(kddockwidgets PRIVATE core/ContextData.cpp)
+    target_compile_definitions(kddockwidgets PUBLIC KDDOCKWIDGETS_CONTEXT_SUPPORT)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR IS_CLANG_BUILD)
     target_compile_options(kddockwidgets PRIVATE -Wshadow)
     if(NOT MSVC)

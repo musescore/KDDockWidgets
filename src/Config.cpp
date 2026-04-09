@@ -17,6 +17,9 @@
  */
 
 #include "Config.h"
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+#include "core/ContextData.h"
+#endif
 #include "core/layouting/Item_p.h"
 #include "core/DockRegistry.h"
 #include "core/DockRegistry_p.h"
@@ -48,8 +51,16 @@ static ViewFactory *createDefaultViewFactory()
 class Config::Private
 {
 public:
-    Private()
-        : m_viewFactory(createDefaultViewFactory())
+    explicit Private(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    )
+        :
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        m_ctx(ctx),
+#endif
+        m_viewFactory(createDefaultViewFactory())
     {
     }
 
@@ -59,6 +70,10 @@ public:
     }
 
     void fixFlags();
+
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    const int m_ctx;
+#endif
 
     DockWidgetFactoryFunc m_dockWidgetFactoryFunc = nullptr;
     MainWindowFactoryFunc m_mainWindowFactoryFunc = nullptr;
@@ -80,16 +95,32 @@ public:
     bool m_showTabsAtBottom = false;
 };
 
-Config::Config()
-    : d(new Private())
+Config::Config(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int ctx
+#endif
+)
+    : d(new Private(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        ctx
+#endif
+    ))
 {
     d->fixFlags();
 }
 
-Config &Config::self()
+Config &Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int ctx
+#endif
+)
 {
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    return *ContextData::context(ctx)->config;
+#else
     static Config config;
     return config;
+#endif
 }
 
 Config::~Config()
@@ -126,7 +157,11 @@ void Config::setFlags(Flags f)
     const bool nonMutableFlagsChanged = (changedFlags & ~mutableFlags);
 
     if (nonMutableFlagsChanged) {
-        auto dr = DockRegistry::self();
+        auto dr = DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            );
         if (!dr->isEmpty(/*excludeBeingDeleted=*/true)) {
             std::cerr
                 << "Config::setFlags: "
@@ -202,7 +237,11 @@ int Config::layoutSpacing() const
 
 void Config::setSeparatorThickness(int value)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/true)) {
+    if (!DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->isEmpty(/*excludeBeingDeleted=*/true)) {
         std::cerr
             << "Config::setSeparatorThickness: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -219,7 +258,11 @@ void Config::setSeparatorThickness(int value)
 
 void Config::setLayoutSpacing(int value)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/true)) {
+    if (!DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->isEmpty(/*excludeBeingDeleted=*/true)) {
         std::cerr
             << "Config::setLayoutSpacing: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -295,7 +338,11 @@ DockWidgetTabIndexOverrideFunc Config::dockWidgetTabIndexOverrideFunc() const
 
 void Config::setAbsoluteWidgetMinSize(Size size)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/false)) {
+    if (!DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->isEmpty(/*excludeBeingDeleted=*/false)) {
         std::cerr
             << "Config::setAbsoluteWidgetMinSize: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -311,7 +358,11 @@ Size Config::absoluteWidgetMinSize() const
 
 void Config::setAbsoluteWidgetMaxSize(Size size)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/false)) {
+    if (!DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->isEmpty(/*excludeBeingDeleted=*/false)) {
         std::cerr
             << "Config::setAbsoluteWidgetMinSize: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -423,7 +474,11 @@ void Config::setDropIndicatorsInhibited(bool inhibit) const
 {
     if (d->m_dropIndicatorsInhibited != inhibit) {
         d->m_dropIndicatorsInhibited = inhibit;
-        DockRegistry::self()->dptr()->dropIndicatorsInhibitedChanged.emit(inhibit);
+        DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            d->m_ctx
+#endif
+            )->dptr()->dropIndicatorsInhibitedChanged.emit(inhibit);
     }
 }
 

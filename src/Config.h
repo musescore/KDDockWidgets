@@ -24,6 +24,8 @@
 
 namespace KDDockWidgets {
 
+class ContextData;
+
 namespace Core {
 class DockWidget;
 class MainWindow;
@@ -66,7 +68,11 @@ class DOCKS_EXPORT Config
 {
 public:
     ///@brief returns the singleton Config instance
-    static Config &self();
+    static Config &self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    );
 
     ///@brief destructor, called at shutdown
     ~Config();
@@ -421,8 +427,16 @@ public:
     bool layoutSaverUsesStrictMode() const;
 
 private:
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    friend class ContextData;
+#endif
+
     KDDW_DELETE_COPY_CTOR(Config)
-    Config();
+    explicit Config(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        int ctx
+#endif
+    );
     class Private;
     Private *const d;
 };

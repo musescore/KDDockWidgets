@@ -387,8 +387,16 @@ static void from_json(const nlohmann::json &json, typename LayoutSaver::DockWidg
 
 }
 
-LayoutSaver::LayoutSaver(RestoreOptions options)
-    : d(new Private(options))
+LayoutSaver::LayoutSaver(RestoreOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                         , int ctx
+#endif
+)
+    : d(new Private(options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                    , ctx
+#endif
+    ))
 {
     d->m_dockRegistry->registerLayoutSaver();
 }
@@ -675,8 +683,16 @@ void LayoutSaver::Private::deserializeWindowGeometry(const T &saved, Window::Ptr
     window->setVisible(saved.isVisible);
 }
 
-LayoutSaver::Private::Private(RestoreOptions options)
-    : m_dockRegistry(DockRegistry::self())
+LayoutSaver::Private::Private(RestoreOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                              , int ctx
+#endif
+)
+    : m_dockRegistry(DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+          ctx
+#endif
+      ))
     , m_restoreOptions(internalRestoreOptions(options))
 {
 }

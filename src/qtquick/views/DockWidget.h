@@ -70,7 +70,11 @@ public:
      */
     explicit DockWidget(const QString &uniqueName, DockWidgetOptions = {},
                         LayoutSaverOptions = {}, Qt::WindowFlags = Qt::Tool,
-                        QQmlEngine *engine = nullptr);
+                        QQmlEngine *engine = nullptr
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                        , int ctx = 0
+#endif
+    );
 
     ///@brief destructor
     ~DockWidget() override;

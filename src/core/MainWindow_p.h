@@ -29,10 +29,21 @@ namespace Core {
 class MainWindow::Private
 {
 public:
-    explicit Private(MainWindow *mainWindow, const QString &, MainWindowOptions options)
+    explicit Private(MainWindow *mainWindow, const QString &, MainWindowOptions options
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                     , int ctx
+#endif
+    )
         : m_options(options)
         , q(mainWindow)
-        , m_supportsAutoHide(Config::self().flags() & Config::Flag_AutoHideSupport)
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        , m_ctx(ctx)
+#endif
+        , m_supportsAutoHide(Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+              ctx
+#endif
+          ).flags() & Config::Flag_AutoHideSupport)
     {
     }
 
@@ -66,7 +77,11 @@ public:
         if (!supportsPersistentCentralWidget())
             return nullptr;
 
-        auto dockView = Config::self().viewFactory()->createDockWidget(
+        auto dockView = Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                            m_ctx
+#endif
+                        ).viewFactory()->createDockWidget(
             uniqueName + QStringLiteral("-persistentCentralDockWidget"));
         auto dw = dockView->asDockWidgetController();
         dw->dptr()->m_isPersistentCentralDockWidget = true;
@@ -112,6 +127,9 @@ public:
     Vector<QString> affinities;
     const MainWindowOptions m_options;
     MainWindow *const q;
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    const int m_ctx;
+#endif
     ObjectGuard<Core::DockWidget> m_overlayedDockWidget;
     std::unordered_map<SideBarLocation, Core::SideBar *> m_sideBars;
     Layout *m_layout = nullptr;

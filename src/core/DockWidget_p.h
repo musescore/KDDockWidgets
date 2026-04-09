@@ -55,7 +55,11 @@ public:
     };
 
     Private(const QString &dockName, DockWidgetOptions options_,
-            LayoutSaverOptions layoutSaverOptions_, DockWidget *qq);
+            LayoutSaverOptions layoutSaverOptions_, DockWidget *qq
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+            , int ctx
+#endif
+    );
 
     ~Private();
 
@@ -275,6 +279,9 @@ public:
     DockWidgetOptions options;
     FloatingWindowFlags m_flags = FloatingWindowFlag::FromGlobalConfig;
     const LayoutSaverOptions layoutSaverOptions;
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    int m_ctx = 0;
+#endif
     Action *const toggleAction;
     Action *const floatAction;
     Positions::Ptr m_lastPositions = std::make_shared<Positions>();

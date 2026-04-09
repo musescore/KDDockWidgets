@@ -53,11 +53,23 @@ using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
 DockWidget::DockWidget(View *view, const QString &name, DockWidgetOptions options,
-                       LayoutSaverOptions layoutSaverOptions)
+                       LayoutSaverOptions layoutSaverOptions
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                       , int ctx
+#endif
+)
     : Controller(ViewType::DockWidget, view)
-    , d(new Private(name, options, layoutSaverOptions, this))
+    , d(new Private(name, options, layoutSaverOptions, this
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                    , ctx
+#endif
+    ))
 {
-    DockRegistry::self()->registerDockWidget(this);
+    DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        d->m_ctx
+#endif
+    )->registerDockWidget(this);
 
     if (name.isEmpty())
         KDDW_ERROR("Name can't be null");
@@ -80,7 +92,11 @@ DockWidget::~DockWidget()
     d->m_windowDeactivatedConnection->disconnect();
 
     safeEmitSignal(d->aboutToDelete, this);
-    DockRegistry::self()->unregisterDockWidget(this);
+    DockRegistry::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+        d->m_ctx
+#endif
+    )->unregisterDockWidget(this);
     delete d;
 }
 
@@ -1048,15 +1064,29 @@ void DockWidget::Private::forceClose()
 }
 
 DockWidget::Private::Private(const QString &dockName, DockWidgetOptions options_,
-                             LayoutSaverOptions layoutSaverOptions_, DockWidget *qq)
-
+                             LayoutSaverOptions layoutSaverOptions_, DockWidget *qq
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                             , int ctx
+#endif
+)
     : m_uniqueName(dockName)
     , title(dockName)
     , q(qq)
     , options(options_)
     , layoutSaverOptions(layoutSaverOptions_)
-    , toggleAction(Config::self().viewFactory()->createAction(q, "toggle"))
-    , floatAction(Config::self().viewFactory()->createAction(q, "float"))
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+    , m_ctx(ctx)
+#endif
+    , toggleAction(Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+          ctx
+#endif
+      ).viewFactory()->createAction(q, "toggle"))
+    , floatAction(Config::self(
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+          ctx
+#endif
+      ).viewFactory()->createAction(q, "float"))
 {
     m_toggleActionConnection = toggleAction->d->toggled.connect(
         [this](bool enabled) {

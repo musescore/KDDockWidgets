@@ -56,7 +56,11 @@ class DOCKS_EXPORT LayoutSaver
 {
 public:
     ///@brief Constructor. Construction on the stack is suggested.
-    explicit LayoutSaver(RestoreOptions options = RestoreOption_None);
+    explicit LayoutSaver(RestoreOptions options = RestoreOption_None
+#ifdef KDDOCKWIDGETS_CONTEXT_SUPPORT
+                         , int ctx = 0
+#endif
+    );
 
     ///@brief Destructor.
     ~LayoutSaver();
