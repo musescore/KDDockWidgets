@@ -31,8 +31,8 @@ using namespace KDDockWidgets::QtWidgets;
 class MDIArea::Private
 {
 public:
-    explicit Private(View *parent)
-        : layout(new MDILayout(parent))
+    explicit Private(int ctx, View *parent)
+        : layout(new MDILayout(ctx, parent))
     {
     }
 
@@ -44,9 +44,9 @@ public:
     MDILayout *const layout;
 };
 
-MDIArea::MDIArea(QWidget *parent)
+MDIArea::MDIArea(int ctx, QWidget *parent)
     : QtWidgets::View<QWidget>(nullptr, ViewType::None, parent)
-    , d(new Private(this))
+    , d(new Private(ctx, this))
 {
 
     auto vlay = new QVBoxLayout(this);
@@ -69,12 +69,12 @@ void MDIArea::addDockWidget(Core::DockWidget *dw, QPoint localPt,
     if (dw->options() & DockWidgetOption_MDINestable) {
         // We' wrap it with a drop area, so we can drag other dock widgets over this one and dock
         auto wrapperDW =
-            Config::self()
+            Config::self(d->layout->ctx())
                 .viewFactory()
                 ->createDockWidget(QStringLiteral("%1-mdiWrapper").arg(dw->uniqueName()))
                 ->asDockWidgetController();
 
-        auto dropAreaWrapper = new DropArea(wrapperDW->view(), {}, /*isMDIWrapper= */ true);
+        auto dropAreaWrapper = new DropArea(d->layout->ctx(), wrapperDW->view(), {}, /*isMDIWrapper= */ true);
         dropAreaWrapper->addDockWidget(dw, Location_OnBottom, nullptr);
         wrapperDW->setGuestView(dropAreaWrapper->view()->asWrapper());
 

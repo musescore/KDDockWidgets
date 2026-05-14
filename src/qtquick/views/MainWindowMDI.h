@@ -29,7 +29,7 @@ public:
     using Core::MainWindowMDIViewInterface::addDockWidget;
 
     ///@brief Constructor. See base class documentation
-    explicit MainWindowMDI(const QString &uniqueName, QQuickItem *parent = nullptr,
+    explicit MainWindowMDI(int ctx, const QString &uniqueName, QQuickItem *parent = nullptr,
                            Qt::WindowFlags flags = Qt::WindowFlags());
 
     ///@brief Destructor

@@ -27,6 +27,19 @@ MainWindowMDIInstantiator::MainWindowMDIInstantiator()
 {
 }
 
+int MainWindowMDIInstantiator::ctx() const
+{
+    return m_ctx;
+}
+
+void MainWindowMDIInstantiator::setCtx(int ctx)
+{
+    if (m_ctx == ctx)
+        return;
+    m_ctx = ctx;
+    Q_EMIT ctxChanged();
+}
+
 QString MainWindowMDIInstantiator::uniqueName() const
 {
     return m_uniqueName;
@@ -74,7 +87,7 @@ void MainWindowMDIInstantiator::componentComplete()
         return;
     }
 
-    if (DockRegistry::self()->containsMainWindow(m_uniqueName)) {
+    if (DockRegistry::self(m_ctx)->containsMainWindow(m_uniqueName)) {
         // MainWindow already exists
         return;
     }
@@ -89,6 +102,6 @@ void MainWindowMDIInstantiator::componentComplete()
         return;
     }
 
-    Core::View *view = new QtQuick::MainWindowMDI(m_uniqueName, this);
+    Core::View *view = new QtQuick::MainWindowMDI(m_ctx, m_uniqueName, this);
     m_mainWindow = view->asMainWindowController();
 }

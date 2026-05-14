@@ -35,6 +35,8 @@ class IndicatorWindow : public QWidget, public Core::ClassicIndicatorWindowViewI
 public:
     explicit IndicatorWindow(Core::ClassicDropIndicatorOverlay *classicIndicators);
 
+    int ctx() const;
+
     DropLocation hover(QPoint globalPos) override;
     void updatePositions() override;
     QPoint posForIndicator(DropLocation) const override;

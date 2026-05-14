@@ -64,9 +64,11 @@ class DOCKS_EXPORT MainWindow : public Controller
 public:
     typedef Vector<MainWindow *> List;
 
-    explicit MainWindow(View *view, const QString &uniqueName, MainWindowOptions options);
+    explicit MainWindow(int ctx, View *view, const QString &uniqueName, MainWindowOptions options);
 
     ~MainWindow() override;
+
+    int ctx() const { return m_ctx; }
 
     /**
      * @brief Docks a DockWidget into the central group, tabbed.
@@ -283,6 +285,8 @@ private:
     friend class KDDockWidgets::LayoutSaver;
     bool deserialize(const LayoutSaver::MainWindow &);
     LayoutSaver::MainWindow serialize() const;
+
+    const int m_ctx = 0;
 };
 }
 }

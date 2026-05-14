@@ -25,8 +25,10 @@ class DOCKS_EXPORT TabBar : public Controller, public Draggable
 {
     Q_OBJECT
 public:
-    explicit TabBar(Stack *tabWidget = nullptr);
+    explicit TabBar(int ctx, Stack *tabWidget = nullptr);
     virtual ~TabBar() override;
+
+    int ctx() const { return m_ctx; }
 
     /**
      * @brief returns the dock widgets at tab number @p index
@@ -92,6 +94,7 @@ public:
 
 private:
     Private *const d;
+    const int m_ctx = 0;
 };
 
 }

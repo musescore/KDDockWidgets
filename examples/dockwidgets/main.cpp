@@ -263,10 +263,10 @@ int main(int argc, char **argv)
     parser.process(app);
 
     if (parser.isSet(customStyle)) {
-        Config::self().setViewFactory(new CustomWidgetFactory()); // Sets our custom factory
+        Config::self(0).setViewFactory(new CustomWidgetFactory()); // Sets our custom factory
 
         // Increase the separator size, just for demo
-        Config::self().setSeparatorThickness(10);
+        Config::self(0).setSeparatorThickness(10);
     }
 
     if (parser.isSet(segmentedIndicators))
@@ -274,9 +274,9 @@ int main(int argc, char **argv)
             KDDockWidgets::DropIndicatorType::Segmented;
 
     MainWindowOptions options = MainWindowOption_None;
-    auto flags = KDDockWidgets::Config::self().flags();
+    auto flags = KDDockWidgets::Config::self(0).flags();
 #if defined(DOCKS_DEVELOPER_MODE)
-    auto internalFlags = KDDockWidgets::Config::self().internalFlags();
+    auto internalFlags = KDDockWidgets::Config::self(0).internalFlags();
 
     options = parser.isSet(centralFrame) ? MainWindowOption_HasCentralGroup : MainWindowOption_None;
 
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
     if (parser.isSet(noAeroSnap))
         internalFlags |= KDDockWidgets::Config::InternalFlag_NoAeroSnap;
 #endif
-    Config::self().setInternalFlags(internalFlags);
+    Config::self(0).setInternalFlags(internalFlags);
 #endif
 
     if (parser.isSet(autoHideSupport))
@@ -395,11 +395,11 @@ int main(int argc, char **argv)
             return (location & KDDockWidgets::DropLocation_Outter) || !isDraggingDW8;
         };
 
-        KDDockWidgets::Config::self().setDropIndicatorAllowedFunc(func);
+        KDDockWidgets::Config::self(0).setDropIndicatorAllowedFunc(func);
     }
 
-    KDDockWidgets::Config::self().setTabsAtBottom(parser.isSet(tabsAtBottom));
-    KDDockWidgets::Config::self().setFlags(flags);
+    KDDockWidgets::Config::self(0).setTabsAtBottom(parser.isSet(tabsAtBottom));
+    KDDockWidgets::Config::self(0).setFlags(flags);
 
 
     MyMainWindow::ExampleOptions exampleOptions = {};
@@ -430,11 +430,11 @@ int main(int argc, char **argv)
         /// 3. If the dragged widget is already a window, we allow a drag to move it, but not dock it
         ///   3.1. We also install an event filter to show the drop indicators when ctrl is pressed
 
-        KDDockWidgets::Config::self().setDragAboutToStartFunc([](Core::Draggable *draggable) -> bool {
+        KDDockWidgets::Config::self(0).setDragAboutToStartFunc([](Core::Draggable *draggable) -> bool {
             const bool ctrlIsPressed = qGuiApp->keyboardModifiers() & Qt::ControlModifier;
 
             if (ctrlIsPressed || draggable->isInProgrammaticDrag()) {
-                KDDockWidgets::Config::self().setDropIndicatorsInhibited(false);
+                KDDockWidgets::Config::self(0).setDropIndicatorsInhibited(false);
                 return true;
             }
 
@@ -442,7 +442,7 @@ int main(int argc, char **argv)
                 qGuiApp->installEventFilter(s_ctrlKeyEventFilter);
 
                 // Ctrl might already be pressed before the DnD even starts, so honour that as well
-                KDDockWidgets::Config::self().setDropIndicatorsInhibited(!ctrlIsPressed);
+                KDDockWidgets::Config::self(0).setDropIndicatorsInhibited(!ctrlIsPressed);
 
                 return true;
             }
@@ -450,7 +450,7 @@ int main(int argc, char **argv)
             return false;
         });
 
-        KDDockWidgets::Config::self().setDragEndedFunc([]() {
+        KDDockWidgets::Config::self(0).setDragEndedFunc([]() {
             // cleanup
             qGuiApp->removeEventFilter(s_ctrlKeyEventFilter);
         });
@@ -488,7 +488,7 @@ int main(int argc, char **argv)
         mainWindow2->show();
     } else if (usesDockableMainWindows) {
         auto mainWindowDockWidget =
-            new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyMainWindow-2-DW"));
+            new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyMainWindow-2-DW"));
 
         const QString affinity = QStringLiteral("Inner-DockWidgets-2");
         MyMainWindow::ExampleOptions exampleOptions2 = {};
@@ -510,7 +510,7 @@ int main(int argc, char **argv)
     const QStringList args = parser.positionalArguments();
     if (!args.isEmpty()) {
         const QString sourceJsonFileName = args[0];
-        KDDockWidgets::LayoutSaver loader;
+        KDDockWidgets::LayoutSaver loader(0);
         if (!loader.restoreFromFile(sourceJsonFileName)) {
             qWarning() << Q_FUNC_INFO << "Failed to restore from" << sourceJsonFileName;
             return 1;

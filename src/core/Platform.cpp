@@ -137,9 +137,9 @@ bool Platform::isQt() const
     return is;
 }
 
-int Platform::startDragDistance() const
+int Platform::startDragDistance(int ctx) const
 {
-    const int userRequestedDistance = Config::self().startDragDistance();
+    const int userRequestedDistance = Config::self(ctx).startDragDistance();
     if (userRequestedDistance > -1)
         return userRequestedDistance;
 
@@ -237,7 +237,7 @@ void Platform::tests_initPlatform(int &argc, char **argv, KDDockWidgets::Fronten
     }
 
     /// Reset the default framework factory, so we can test several frontends in the same test run
-    Config::self().setViewFactory(Platform::instance()->createDefaultViewFactory());
+    Config::self(0).setViewFactory(Platform::instance()->createDefaultViewFactory());
 
     /// Any additional setup
     Platform::instance()->tests_initPlatform_impl();
@@ -250,7 +250,7 @@ void Platform::tests_deinitPlatform()
     plat->d->m_inDestruction = true;
 
     plat->tests_deinitPlatform_impl();
-    delete DockRegistry::self();
+    delete DockRegistry::self(0);
     delete plat;
 }
 #endif

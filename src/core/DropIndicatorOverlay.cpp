@@ -39,17 +39,17 @@ DropIndicatorOverlay::DropIndicatorOverlay(DropArea *dropArea, View *view)
     // overlay
     view->enableAttribute(Qt::WA_TransparentForMouseEvents);
 
-    d->dropIndicatorsInhibitedConnection = DockRegistry::self()->dptr()->dropIndicatorsInhibitedChanged.connect([this](bool inhibited) {
+    d->dropIndicatorsInhibitedConnection = DockRegistry::self(ctx())->dptr()->dropIndicatorsInhibitedChanged.connect([this](bool inhibited) {
         if (inhibited) {
             removeHover();
         } else {
             // Re-add hover. Fastest way is simply faking a mouse move
-            if (auto state = object_cast<StateDragging *>(DragController::instance()->activeState())) {
+            if (auto state = object_cast<StateDragging *>(DragController::instance(ctx())->activeState())) {
                 state->handleMouseMove(Platform::instance()->cursorPos());
             }
         }
 
-        if (WindowBeingDragged *wbd = DragController::instance()->windowBeingDragged()) {
+        if (WindowBeingDragged *wbd = DragController::instance(ctx())->windowBeingDragged()) {
             /// Don't use transparency if drop areas are inhibited
             wbd->updateTransparency(!inhibited);
         }
@@ -65,6 +65,11 @@ DropIndicatorOverlay::DropIndicatorOverlay(Core::DropArea *dropArea)
 DropIndicatorOverlay::~DropIndicatorOverlay()
 {
     delete d;
+}
+
+int DropIndicatorOverlay::ctx() const
+{
+    return m_dropArea ? m_dropArea->ctx() : 0;
 }
 
 void DropIndicatorOverlay::setWindowBeingDragged(bool is)
@@ -94,7 +99,7 @@ void DropIndicatorOverlay::setHoveredGroup(Core::Group *group)
     if (group == m_hoveredGroup)
         return;
 
-    if (WindowBeingDragged *wbd = DragController::instance()->windowBeingDragged()) {
+    if (WindowBeingDragged *wbd = DragController::instance(ctx())->windowBeingDragged()) {
         if (wbd->isInWaylandDrag(group)) {
             // With wayland, we don't detach the group before the mouse release.
             // Instead, we start a QDrag, with this group as cursor QPixmap.
@@ -165,7 +170,7 @@ bool DropIndicatorOverlay::dropIndicatorVisible(DropLocation dropLoc) const
     if (dropLoc == DropLocation_None)
         return false;
 
-    WindowBeingDragged *windowBeingDragged = DragController::instance()->windowBeingDragged();
+    WindowBeingDragged *windowBeingDragged = DragController::instance(ctx())->windowBeingDragged();
     if (!windowBeingDragged)
         return false;
 
@@ -184,7 +189,7 @@ bool DropIndicatorOverlay::dropIndicatorVisible(DropLocation dropLoc) const
         // so it's useful to show the outer indicators in this case
         const bool isTheOnlyGroup = m_hoveredGroup && m_hoveredGroup->isTheOnlyGroup();
         if (isTheOnlyGroup
-            && !DockRegistry::self()->isProbablyObscured(m_hoveredGroup->view()->window(),
+            && !DockRegistry::self(ctx())->isProbablyObscured(m_hoveredGroup->view()->window(),
                                                          windowBeingDragged))
             return false;
     } else if (dropLoc == DropLocation_Center) {
@@ -192,7 +197,7 @@ bool DropIndicatorOverlay::dropIndicatorVisible(DropLocation dropLoc) const
             return false;
 
         // Only allow to dock to center if the affinities match
-        if (!DockRegistry::self()->affinitiesMatch(m_hoveredGroup->affinities(),
+        if (!DockRegistry::self(ctx())->affinitiesMatch(m_hoveredGroup->affinities(),
                                                    windowBeingDragged->affinities()))
             return false;
     } else {
@@ -200,8 +205,8 @@ bool DropIndicatorOverlay::dropIndicatorVisible(DropLocation dropLoc) const
         return false;
     }
 
-    if (auto dropIndicatorAllowedFunc = Config::self().dropIndicatorAllowedFunc()) {
-        DropArea *dropArea = DragController::instance()->dropAreaUnderCursor();
+    if (auto dropIndicatorAllowedFunc = Config::self(ctx()).dropIndicatorAllowedFunc()) {
+        DropArea *dropArea = DragController::instance(ctx())->dropAreaUnderCursor();
         if (!dropIndicatorAllowedFunc(dropLoc, source, target, dropArea))
             return false;
     }

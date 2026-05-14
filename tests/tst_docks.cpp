@@ -392,7 +392,7 @@ void TestDocks::tst_hasPreviousDockedLocation2()
         dock1->setFloating(true);
         QVERIFY(dock1->hasPreviousDockedLocation());
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved = saver.serializeLayout();
         saver.restoreLayout(saved);
         QVERIFY(dock1->hasPreviousDockedLocation());
@@ -405,7 +405,7 @@ void TestDocks::tst_hasPreviousDockedLocation2()
         auto m = createMainWindow(Size(501, 500), MainWindowOption_None, "mainWindow1");
         auto dock1 = createDockWidget("1");
         QVERIFY(!dock1->hasPreviousDockedLocation());
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saver.restoreLayout(saved);
 
         QVERIFY(dock1->hasPreviousDockedLocation());
@@ -416,7 +416,7 @@ void TestDocks::tst_hasPreviousDockedLocation2()
     {
         EnsureTopLevelsDeleted e;
         auto m = createMainWindow(Size(501, 500), MainWindowOption_None, "mainWindow1");
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saver.restoreLayout(saved);
 
         // QEXPECT_FAIL: We can't uncomment this yet, not supported, but we should.
@@ -434,7 +434,7 @@ void TestDocks::tst_hasPreviousDockedLocation2()
         m->addDockWidget(dock2, Location_OnBottom, nullptr, InitialVisibilityOption::StartHidden);
         QVERIFY(dock2->hasPreviousDockedLocation());
 
-        LayoutSaver saver2;
+        LayoutSaver saver2(0);
         saved2 = saver2.serializeLayout();
         delete dock2;
     }
@@ -444,7 +444,7 @@ void TestDocks::tst_hasPreviousDockedLocation2()
         auto m = createMainWindow(Size(501, 500), MainWindowOption_None, "mainWindow2");
         auto dock2 = createDockWidget("2", Platform::instance()->tests_createView({ true, {}, { 100, 100 } }), {}, {}, false);
 
-        LayoutSaver saver2;
+        LayoutSaver saver2(0);
         saver2.restoreLayout(saved2);
         QVERIFY(dock2->hasPreviousDockedLocation());
         delete dock2;
@@ -469,7 +469,7 @@ void TestDocks::tst_LayoutSaverOpenedDocks()
         dock2->close();
         dock3->close();
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved1 = saver.serializeLayout();
     }
 
@@ -482,7 +482,7 @@ void TestDocks::tst_LayoutSaverOpenedDocks()
         dock3->close();
         m->addDockWidget(dock1, KDDockWidgets::Location_OnRight);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved2 = saver.serializeLayout();
     }
 
@@ -711,7 +711,7 @@ void TestDocks::tst_restoreTwice()
     dock3->dptr()->morphIntoFloatingWindow();
 
     {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreTwice.json")));
         QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreTwice.json")));
         QVERIFY(dock2->isVisible());
@@ -719,7 +719,7 @@ void TestDocks::tst_restoreTwice()
     }
 
     {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreTwice.json")));
         QVERIFY(dock2->isVisible());
         QVERIFY(dock3->isVisible());
@@ -748,10 +748,10 @@ void TestDocks::tst_restoreWithInvalidCurrentTab()
         KDDockWidgets::Config::self().setDockWidgetFactoryFunc(dwFunc);
         KDDockWidgets::Config::self().setMainWindowFactoryFunc(mwFunc);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
 
         bool ok = false;
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         const QByteArray data = Platform::instance()->readFile(":/layouts/invalidCurrentTab.json", /*by-ref*/ ok);
         QVERIFY(ok);
 
@@ -775,7 +775,7 @@ void TestDocks::tst_restoreWithInvalidCurrentTab()
 
 void TestDocks::tst_restoreNlohmanException()
 {
-    LayoutSaver saver;
+    LayoutSaver saver(0);
 
     bool ok = false;
     LayoutSaver::Layout layout;
@@ -791,7 +791,7 @@ void TestDocks::tst_restoreEmpty()
     // Create an empty main window, save it to disk.
     auto m = createMainWindow(Size(800, 500), MainWindowOption_None);
     auto layout = m->multiSplitter();
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const Size oldSize = m->size();
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreEmpty.json")));
     saver.restoreFromFile(QStringLiteral("layout_tst_restoreEmpty.json"));
@@ -815,7 +815,7 @@ void TestDocks::tst_restoreCentralFrame()
     QCOMPARE(group->options(), FrameOption_IsCentralFrame | FrameOption_AlwaysShowsTabs);
     QVERIFY(!group->titleBar()->isVisible());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreCentralFrame.json")));
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreCentralFrame.json")));
 
@@ -835,7 +835,7 @@ void TestDocks::tst_restoreMaximizedState()
     m->view()->showMaximized();
 
     QCOMPARE(m->view()->window()->windowState(), WindowState::Maximized);
-    LayoutSaver saver;
+    LayoutSaver saver(0);
 
     const QByteArray saved = saver.serializeLayout();
     m->view()->showNormal();
@@ -858,7 +858,7 @@ void TestDocks::tst_minimizeRestoreBug()
     auto d4 = createDockWidget("dock4");
 
     bool ok = false;
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     const QByteArray data = Platform::instance()->readFile(":/layouts/minimizeBug.json", /*by-ref*/ ok);
     QVERIFY(ok);
     QVERIFY(restorer.restoreLayout(data));
@@ -879,7 +879,7 @@ void TestDocks::tst_restoreFloatingMinimizedState()
 
     QCOMPARE(dock1->floatingWindow()->view()->window()->windowState(), WindowState::Minimized);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     saver.restoreLayout(saved);
@@ -906,7 +906,7 @@ void TestDocks::tst_restoreNonExistingDockWidget()
     {
         EnsureTopLevelsDeleted e;
         auto m = createMainWindow(defaultMainWindowSize, MainWindowOption_None, "mainwindow1");
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved = saver.serializeLayout();
     }
 
@@ -915,7 +915,7 @@ void TestDocks::tst_restoreNonExistingDockWidget()
     auto dock2 = createDockWidget(
         "dock2", Platform::instance()->tests_createView({ true, {}, Size(100, 100) }));
     m->addDockWidget(dock2, Location_OnBottom);
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     SetExpectedWarning sew("Couldn't find dock widget");
     QVERIFY(restorer.restoreLayout(saved));
     auto da = m->dropArea();
@@ -1009,7 +1009,7 @@ void TestDocks::tst_closeReason()
         QVERIFY(!dock1->isOpen());
         QCOMPARE(dock1->lastCloseReason(), CloseReason::Action);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved = saver.serializeLayout();
     }
 
@@ -1017,7 +1017,7 @@ void TestDocks::tst_closeReason()
         EnsureTopLevelsDeleted e;
         auto dock1 = createDockWidget("d1");
         QCOMPARE(dock1->lastCloseReason(), CloseReason::Unspecified);
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         restorer.restoreLayout(saved);
         QCOMPARE(dock1->lastCloseReason(), CloseReason::Action);
     }
@@ -1026,7 +1026,7 @@ void TestDocks::tst_closeReason()
         // Restore before having the actual dock widget:
 
         EnsureTopLevelsDeleted e;
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         restorer.restoreLayout(saved);
 
         auto dock1 = createDockWidget("d1", LayoutSaverOption::CheckForPreviousRestore);
@@ -1052,7 +1052,7 @@ void TestDocks::tst_layoutEqually()
     dock2->setAffinities({ mainWindowId });
     dock3->setAffinities({ mainWindowId });
 
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     restorer.restoreFromFile(resourceFileName("layouts/layoutEquallyCrash.json"));
 
     m->layoutEqually();
@@ -2763,7 +2763,7 @@ void TestDocks::tst_restoreNonClosable()
                              DockWidgetOption_NotClosable);
         QCOMPARE(dock1->options(), DockWidgetOption_NotClosable);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
         QVERIFY(saver.restoreLayout(saved));
         QCOMPARE(dock1->options(), DockWidgetOption_NotClosable);
@@ -2793,7 +2793,7 @@ void TestDocks::tst_restoreNonClosable()
         QVERIFY(tb->isVisible());
         QVERIFY(!tb->closeButtonEnabled());
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
 
         QVERIFY(saver.restoreLayout(saved));
@@ -2814,7 +2814,7 @@ void TestDocks::tst_restoreRestoresMainWindowPosition()
         auto m = createMainWindow(Size(800, 500), MainWindowOption_None);
         const Point originalPos = m->pos();
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
 
         m->view()->move(originalPos + Point(100, 100));
@@ -2933,7 +2933,7 @@ void TestDocks::tst_restoreAfterResize()
     auto layout = m->multiSplitter();
     const Size oldContentsSize = layout->layoutSize();
     const Size oldWindowSize = m->size();
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreAfterResize.json")));
     m->view()->resize(Size(1000, 1000));
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreAfterResize.json")));
@@ -2957,7 +2957,7 @@ void TestDocks::tst_restoreWithNonClosableWidget()
     m->addDockWidget(dock1, Location_OnLeft);
     auto layout = m->multiSplitter();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreWithNonClosableWidget.json")));
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreWithNonClosableWidget.json")));
     QVERIFY(layout->checkSanity());
@@ -2996,7 +2996,7 @@ void TestDocks::tst_restoreNestedAndTabbed()
         QCOMPARE(dock2->dptr()->group()->currentTabIndex(), 0);
         QCOMPARE(dock4->dptr()->group()->currentTabIndex(), 1);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreNestedAndTabbed.json")));
         QVERIFY(layout->checkSanity());
 
@@ -3012,7 +3012,7 @@ void TestDocks::tst_restoreNestedAndTabbed()
     auto dock4 = createDockWidget("4", Platform::instance()->tests_createFocusableView({ true }));
     auto dock5 = createDockWidget("5", Platform::instance()->tests_createFocusableView({ true }));
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreNestedAndTabbed.json")));
     QVERIFY(layout->checkSanity());
 
@@ -3040,7 +3040,7 @@ void TestDocks::tst_restoreCrash()
         auto m = createMainWindow({}, {}, "tst_restoreCrash");
         auto dock1 = createDockWidget("dock1", Platform::instance()->tests_createView({ true }));
         m->addDockWidget(dock1, Location_OnLeft);
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreCrash.json")));
     }
 
@@ -3051,7 +3051,7 @@ void TestDocks::tst_restoreCrash()
     QVERIFY(dock1->isFloating());
     QVERIFY(layout->checkSanity());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreCrash.json")));
     QVERIFY(layout->checkSanity());
     QVERIFY(!dock1->isFloating());
@@ -3078,7 +3078,7 @@ void TestDocks::tst_restoreSideBySide()
         dock2->addDockWidgetToContainingWindow(dock3, Location_OnRight);
         auto fw2 = dock2->floatingWindow();
         item2MinSize = fw2->layout()->itemForGroup(dock2->dptr()->group())->minSize();
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreSideBySide.json")));
         QVERIFY(layout->checkSanity());
     }
@@ -3090,7 +3090,7 @@ void TestDocks::tst_restoreSideBySide()
         auto dock2 = createDockWidget("2", Platform::instance()->tests_createView({ true }));
         auto dock3 = createDockWidget("3", Platform::instance()->tests_createView({ true }));
 
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         QVERIFY(restorer.restoreFromFile(QStringLiteral("layout_tst_restoreSideBySide.json")));
 
         QVERIFY(dock1->window()->equals(m->view()));
@@ -3116,14 +3116,14 @@ void TestDocks::tst_restoreGroupOptions()
         auto d1 = createDockWidget("1", Platform::instance()->tests_createFocusableView({ true }));
         m->addDockWidget(d1, Location_OnTop);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved = saver.serializeLayout();
     } // flags are reset at end of scope
 
     auto m = createMainWindow({ 500, 500 }, {}, "mw1");
     auto d1 = createDockWidget("1", Platform::instance()->tests_createFocusableView({ true }));
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.restoreLayout(saved));
 
     Group *group = d1->dptr()->group();
@@ -3242,7 +3242,7 @@ void TestDocks::tst_restoreWithCentralFrameWithTabs()
 
     QCOMPARE(DockRegistry::self()->groups().size(), 1);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     QVERIFY(saver.restoreLayout(saved));
 
@@ -3266,7 +3266,7 @@ void TestDocks::tst_restoreAfterMinSizeChanges()
         m->addDockWidget(dockB, Location_OnLeft);
         m->addDockWidget(dockA, Location_OnLeft, nullptr, minSize);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const auto saved = saver.serializeLayout();
 
         // Min size increaseses:
@@ -3289,7 +3289,7 @@ void TestDocks::tst_restoreAfterMinSizeChanges()
         }
 
         bool ok = false;
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         const QByteArray data = Platform::instance()->readFile(":/layouts/minSizeChanges.json", /*by-ref*/ ok);
         QVERIFY(ok);
         QVERIFY(restorer.restoreLayout(data));
@@ -3309,7 +3309,7 @@ void TestDocks::tst_restoreWithPlaceholder()
         auto layout = m->multiSplitter();
         dock1->setFloating(true);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreWithPlaceholder.json")));
 
         dock1->close();
@@ -3336,7 +3336,7 @@ void TestDocks::tst_restoreWithPlaceholder()
     auto dock1 = createDockWidget("1", Platform::instance()->tests_createView({ true }));
     auto layout = m->multiSplitter();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_restoreWithPlaceholder.json")));
     QVERIFY(layout->checkSanity());
 
@@ -3371,7 +3371,7 @@ void TestDocks::tst_restoreWithAffinity()
     dock2->setFloating(true);
     dock2->open();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     saver.setAffinityNames({ "a1" });
     const QByteArray saved1 = saver.serializeLayout();
 
@@ -3408,7 +3408,7 @@ void TestDocks::tst_marginsAfterRestore()
         m->addDockWidget(dock1, Location_OnLeft);
         auto layout = m->multiSplitter();
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_marginsAfterRestore.json")));
         QVERIFY(saver.restoreFromFile(QStringLiteral("layout_tst_marginsAfterRestore.json")));
         QVERIFY(layout->checkSanity());
@@ -3471,7 +3471,7 @@ void TestDocks::tst_restoreWithNewDockWidgets()
     // when it saves the layout, then it won't close it when restoring layout
     // it will just be ignored.
     EnsureTopLevelsDeleted e;
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     QVERIFY(!saved.isEmpty());
 
@@ -3497,7 +3497,7 @@ void TestDocks::tst_restoreWithDockFactory()
     QCOMPARE(layout->placeholderCount(), 0);
     QCOMPARE(layout->visibleCount(), 1);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QByteArray saved = saver.serializeLayout();
     QVERIFY(!saved.isEmpty());
     ObjectGuard<Core::Group> f1 = dock1->dptr()->group();
@@ -3539,7 +3539,7 @@ void TestDocks::tst_restoreWithDockFactory2()
     m->addDockWidget(dock1, Location_OnLeft);
     dock1->setFloating(true);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     delete dock1;
 
@@ -3981,7 +3981,7 @@ void TestDocks::tst_moreTitleBarCornerCases()
         QVERIFY(!dock1->dptr()->group()->titleBar()->isVisible());
         QVERIFY(fw1->titleBar()->isVisible());
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
         saver.restoreLayout(saved);
 
@@ -4200,7 +4200,7 @@ void TestDocks::tst_stuckSeparator()
             dw25 = createdDw;
     }
 
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     QVERIFY(restorer.restoreFromFile(absoluteLayoutFileName));
 
     Core::Group *group25 = dw25->dptr()->group();
@@ -4280,7 +4280,7 @@ void TestDocks::tst_lastFloatingPositionIsRestored()
     auto oldFw = dock1->window();
     WAIT_FOR_EVENT(dock1->window().get(), Event::Move);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QByteArray saved = saver.serializeLayout();
 
     dock1->window()->move(0, 0);
@@ -4691,7 +4691,7 @@ void TestDocks::tst_dontCloseDockWidgetBeforeRestore()
     QVERIFY(dock3->isFloating());
     QVERIFY(!dock3->isInMainWindow());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     dock3->close();
 
@@ -4729,7 +4729,7 @@ void TestDocks::tst_dontCloseDockWidgetBeforeRestore2()
     dock2->close();
     dock3->close();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout(); // This layout has 0 docks visible
 
     dock2->open();
@@ -4762,7 +4762,7 @@ void TestDocks::tst_dontCloseDockWidgetBeforeRestore3()
     dock1->close();
     dock2->close();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout(); // This layout has 0 docks visible
 
     m->addDockWidget(dock1, Location_OnBottom);
@@ -4793,7 +4793,7 @@ void TestDocks::tst_dontCloseDockWidgetBeforeRestore4()
     dock1->close();
     dock2->close();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     QTest::qWait(100);
@@ -4819,7 +4819,7 @@ void TestDocks::tst_skipRestoreInsideMainWindow()
                                   LayoutSaverOption::Skip);
     m->addDockWidget(dock1, Location_OnBottom);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     dock1->close();
@@ -5425,7 +5425,7 @@ void TestDocks::tst_deleteOnClose()
         ObjectGuard<Core::DockWidget> dock2 = createDockWidget(
             "2", Platform::instance()->tests_createView({ true, {}, Size(400, 400) }), {}, {},
             /*show=*/false);
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
         dock1->open();
         dock2->open();
@@ -5621,7 +5621,7 @@ void TestDocks::tst_addMDIDockWidget()
 
     // MDI doesn't support LayoutSaver yet, but it was crashing, so add a test
     // to catch further crashes
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 }
 
@@ -5748,7 +5748,7 @@ void TestDocks::tst_mixedMDIRestoreToArea()
     EnsureTopLevelsDeleted e;
 
     auto m = createMainWindow(Size(800, 500), MainWindowOption_HasCentralWidget);
-    auto mdiLayout = new Core::MDILayout(nullptr);
+    auto mdiLayout = new Core::MDILayout(0, nullptr);
     m->setPersistentCentralView(mdiLayout->view()->asWrapper());
 
     auto dock0 = createDockWidget(
@@ -5822,7 +5822,7 @@ void TestDocks::tst_restoreWithNativeTitleBar()
     QVERIFY(!dock0->floatingWindow()->titleBar()->isVisible());
     QVERIFY(!dock0->d->group()->titleBar()->isVisible());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     saver.restoreLayout(saved);
     QVERIFY(!dock0->titleBar()->isVisible());
@@ -5873,7 +5873,7 @@ void TestDocks::tst_persistentCentralWidget()
     QVERIFY(!dw->isFloating());
 
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
     QVERIFY(!saved.isEmpty());
 
@@ -5991,7 +5991,7 @@ void TestDocks::tst_titlebarNumDockWidgetsChanged()
     {
         // Block to manually test that signal is emitted when using LayoutSaver as well
         // Use debugger or add a connect() in TitleBar's ctor to checks
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
 
         dock0->close();
@@ -6070,7 +6070,7 @@ void TestDocks::tst_restoreAfterUnminimized()
 
     QVERIFY(dock0->window()->isMinimized());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const auto saved = saver.serializeLayout();
     saver.saveToFile("filename.txt");
     dock0->window()->showNormal();
@@ -6100,7 +6100,7 @@ void TestDocks::tst_restoreFlagsFromVersion16()
     // Save a layout with a floating window:
     auto dock1 = createDockWidget("1");
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     saver.restoreFromFile(resourceFileName("layouts/1.6layoutWithoutFloatingWindowFlags.json"));
 
     auto floatingWindow = dock1->floatingWindow();

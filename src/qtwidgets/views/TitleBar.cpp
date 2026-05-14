@@ -153,8 +153,8 @@ TitleBar::TitleBar(Core::TitleBar *controller, Core::View *parent)
 {
 }
 
-TitleBar::TitleBar(QWidget *parent)
-    : View(new Core::TitleBar(this), Core::ViewType::TitleBar, parent)
+TitleBar::TitleBar(int ctx, QWidget *parent)
+    : View(new Core::TitleBar(ctx, this), Core::ViewType::TitleBar, parent)
     , Core::TitleBarViewInterface(static_cast<Core::TitleBar *>(controller()))
     , m_layout(new QHBoxLayout(this))
     , d(new Private())
@@ -179,7 +179,7 @@ TitleBar::~TitleBar()
         }
 
         button->setParent(nullptr);
-        if (usesQTBUG83030Workaround()) {
+        if (usesQTBUG83030Workaround(m_titleBar->ctx())) {
             QTimer::singleShot(0, button, [button] {
                 /// Workaround for QTBUG-83030. QObject::deleteLater() is buggy with nested event loop
                 delete button;
@@ -202,7 +202,7 @@ void TitleBar::init()
         m_layout->addStretch();
         updateMargins();
 
-        auto factory = static_cast<ViewFactory *>(Config::self().viewFactory());
+        auto factory = static_cast<ViewFactory *>(Config::self(m_titleBar->ctx()).viewFactory());
         m_maximizeButton = factory->createTitleBarButton(this, TitleBarButtonType::Maximize);
         m_minimizeButton = factory->createTitleBarButton(this, TitleBarButtonType::Minimize);
         m_floatButton = factory->createTitleBarButton(this, TitleBarButtonType::Float);
@@ -253,7 +253,7 @@ void TitleBar::init()
 
     d->titleChangedConnection = m_titleBar->dptr()->titleChanged.connect([this] { update(); });
 
-    d->screenChangedConnection = DockRegistry::self()->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
+    d->screenChangedConnection = DockRegistry::self(m_titleBar->ctx())->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
         if (View::d->isInWindow(w))
             updateMargins();
     });
@@ -307,7 +307,7 @@ void TitleBar::updateAutoHideButton(bool visible, bool enabled, TitleBarButtonTy
 
     m_autoHideButton->setToolTip(type == TitleBarButtonType::AutoHide ? tr("Auto-hide")
                                                                       : tr("Disable auto-hide"));
-    auto factory = Config::self().viewFactory();
+    auto factory = Config::self(m_titleBar->ctx()).viewFactory();
     m_autoHideButton->setIcon(factory->iconForButtonType(type, devicePixelRatioF()));
     m_autoHideButton->setVisible(visible);
     m_autoHideButton->setEnabled(enabled);
@@ -321,7 +321,7 @@ void TitleBar::updateMaximizeButton(bool visible, bool enabled, TitleBarButtonTy
     m_maximizeButton->setEnabled(enabled);
     m_maximizeButton->setVisible(visible);
     if (visible) {
-        auto factory = Config::self().viewFactory();
+        auto factory = Config::self(m_titleBar->ctx()).viewFactory();
         m_maximizeButton->setIcon(factory->iconForButtonType(type, devicePixelRatioF()));
         m_maximizeButton->setToolTip(type == TitleBarButtonType::Normal ? tr("Restore")
                                                                         : tr("Maximize"));

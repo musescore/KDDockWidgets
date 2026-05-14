@@ -170,7 +170,7 @@ void TestDocks::tst_restoreSimple()
     dock3->view()->window()->setFramePosition(dock3FloatingPoint);
     dock3->close();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreSimple.json")));
     auto f1 = dock1->dptr()->group();
     dock2->window()->move(Point(0, 0)); // Move *after* we saved.
@@ -227,7 +227,7 @@ void TestDocks::tst_restoreSimplest()
     auto dock1 = createDockWidget("one", Platform::instance()->tests_createFocusableView({ true }));
     m->addDockWidget(dock1, Location_OnTop);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile(QStringLiteral("layout_tst_restoreSimplest.json")));
 
     QTest::qWait(300);

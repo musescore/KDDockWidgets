@@ -18,6 +18,8 @@
 #include <QObject>
 #include <QQmlEngine>
 
+#include <memory>
+
 QT_BEGIN_NAMESPACE
 class QQuickItem;
 QT_END_NAMESPACE
@@ -30,14 +32,18 @@ namespace KDDockWidgets {
  * Use it from QML, like: LayoutSaver { id: saver }
  * For C++, just use KDDockWidgets::LayoutSaver directly
  */
-class DOCKS_EXPORT LayoutSaverInstantiator : public QObject, public LayoutSaver
+class DOCKS_EXPORT LayoutSaverInstantiator : public QObject
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(LayoutSaver)
+    Q_PROPERTY(int ctx READ ctx WRITE setCtx NOTIFY ctxChanged)
     Q_PROPERTY(QVector<QString> affinities READ affinities WRITE setAffinities NOTIFY affinitiesChanged)
 public:
     explicit LayoutSaverInstantiator(QObject *parent = nullptr);
     ~LayoutSaverInstantiator() override;
+
+    int ctx() const;
+    void setCtx(int);
 
     QVector<QString> affinities() const;
     void setAffinities(const QVector<QString> &);
@@ -45,7 +51,13 @@ public:
     Q_INVOKABLE bool saveToFile(const QString &jsonFilename);
     Q_INVOKABLE bool restoreFromFile(const QString &jsonFilename);
 Q_SIGNALS:
+    void ctxChanged();
     void affinitiesChanged();
+
+private:
+    LayoutSaver *saver();
+    int m_ctx = 0;
+    std::unique_ptr<LayoutSaver> m_saver;
 };
 
 }

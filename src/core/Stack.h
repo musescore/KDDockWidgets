@@ -35,8 +35,10 @@ class DOCKS_EXPORT Stack : public Controller, public Draggable
 {
     Q_OBJECT
 public:
-    explicit Stack(Group *, StackOptions);
+    explicit Stack(int ctx, Group *, StackOptions);
     virtual ~Stack() override;
+
+    int ctx() const { return m_ctx; }
 
     /**
      * @brief returns the number of dock widgets in this TabWidget
@@ -103,6 +105,7 @@ private:
 
     class Private;
     Private *const d;
+    const int m_ctx = 0;
 
     KDDW_DELETE_COPY_CTOR(Stack)
 };

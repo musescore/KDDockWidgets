@@ -69,7 +69,7 @@ struct LayoutSaver::Placeholder
 struct DOCKS_EXPORT LayoutSaver::ScalingInfo
 {
     ScalingInfo() = default;
-    explicit ScalingInfo(const QString &mainWindowId, Rect savedMainWindowGeo, int screenIndex);
+    explicit ScalingInfo(int ctx, const QString &mainWindowId, Rect savedMainWindowGeo, int screenIndex);
 
     bool isValid() const
     {
@@ -130,7 +130,7 @@ struct DOCKS_EXPORT LayoutSaver::DockWidget
         return dw;
     }
 
-    bool skipsRestore() const;
+    bool skipsRestore(int ctx) const;
 
     QString uniqueName;
     Vector<QString> affinities;
@@ -158,10 +158,10 @@ inline Vector<QString> dockWidgetNames(const LayoutSaver::DockWidget::List &list
 
 struct DOCKS_EXPORT LayoutSaver::Group
 {
-    bool isValid() const;
+    bool isValid(int ctx) const;
 
     bool hasSingleDockWidget() const;
-    bool skipsRestore() const;
+    bool skipsRestore(int ctx) const;
 
     /// @brief in case this group only has one group, returns the name of that dock widget
     LayoutSaver::DockWidget::Ptr singleDockWidget() const;
@@ -182,11 +182,11 @@ struct DOCKS_EXPORT LayoutSaver::Group
 
 struct DOCKS_EXPORT LayoutSaver::MultiSplitter
 {
-    bool isValid() const;
+    bool isValid(int ctx) const;
 
     bool hasSingleDockWidget() const;
     LayoutSaver::DockWidget::Ptr singleDockWidget() const;
-    bool skipsRestore() const;
+    bool skipsRestore(int ctx) const;
 
     nlohmann::json layout;
     std::unordered_map<QString, LayoutSaver::Group> groups;
@@ -196,11 +196,11 @@ struct DOCKS_EXPORT LayoutSaver::FloatingWindow
 {
     typedef Vector<LayoutSaver::FloatingWindow> List;
 
-    bool isValid() const;
+    bool isValid(int ctx) const;
 
     bool hasSingleDockWidget() const;
     LayoutSaver::DockWidget::Ptr singleDockWidget() const;
-    bool skipsRestore() const;
+    bool skipsRestore(int ctx) const;
 
     /// Iterates through the layout and patches all absolute sizes. See
     /// RestoreOption_RelativeToMainWindow.
@@ -226,11 +226,11 @@ struct DOCKS_EXPORT LayoutSaver::MainWindow
 public:
     typedef Vector<LayoutSaver::MainWindow> List;
 
-    bool isValid() const;
+    bool isValid(int ctx) const;
 
     /// Iterates through the layout and patches all absolute sizes. See
     /// RestoreOption_RelativeToMainWindow.
-    void scaleSizes();
+    void scaleSizes(int ctx);
 
     Vector<QString> dockWidgetsForSideBar(SideBarLocation) const;
 
@@ -288,14 +288,14 @@ public:
         s_currentLayoutBeingRestored = nullptr;
     }
 
-    bool isValid() const;
+    bool isValid(int ctx) const;
 
     QByteArray toJson() const;
     bool fromJson(const QByteArray &jsonData);
 
     /// Iterates through the layout and patches all absolute sizes. See
     /// RestoreOption_RelativeToMainWindow.
-    void scaleSizes(KDDockWidgets::InternalRestoreOptions);
+    void scaleSizes(int ctx, KDDockWidgets::InternalRestoreOptions);
 
     static LayoutSaver::Layout *s_currentLayoutBeingRestored;
 
@@ -304,7 +304,7 @@ public:
 
     Vector<QString> mainWindowNames() const;
     Vector<QString> dockWidgetNames() const;
-    Vector<QString> dockWidgetsToClose() const;
+    Vector<QString> dockWidgetsToClose(int ctx) const;
     bool containsDockWidget(const QString &uniqueName) const;
 
     int serializationVersion = KDDOCKWIDGETS_SERIALIZATION_VERSION;
@@ -328,7 +328,7 @@ public:
         KDDW_DELETE_COPY_CTOR(RAIIIsRestoring)
     };
 
-    explicit Private(RestoreOptions options);
+    explicit Private(int ctx, RestoreOptions options);
 
     static void restorePendingPositions(Core::DockWidget *);
 

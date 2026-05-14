@@ -97,7 +97,7 @@ void TestQtQuick::tst_restoreRestoresMainWindowPosition()
 
     Window::Ptr window = mainWindow->view()->window();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     const QPoint originalPos = window->framePosition();
@@ -243,10 +243,10 @@ void TestQtQuick::tst_childQmlContext()
 
     {
         QQmlApplicationEngine engine(":/main2.qml");
-        auto dock1 = new QtQuick::DockWidget("dock1");
-        auto dock2 = new QtQuick::DockWidget("dock2");
-        auto dock3 = new QtQuick::DockWidget("dock3");
-        auto dock4 = new QtQuick::DockWidget("dock4");
+        auto dock1 = new QtQuick::DockWidget(0, "dock1");
+        auto dock2 = new QtQuick::DockWidget(0, "dock2");
+        auto dock3 = new QtQuick::DockWidget(0, "dock3");
+        auto dock4 = new QtQuick::DockWidget(0, "dock4");
 
         const auto defaultPropertyValue = QVariant(0);
         const auto overriddenPropertyValue = QVariant(1);
@@ -504,7 +504,7 @@ void TestQtQuick::tst_effectiveVisibilityBug()
         EnsureTopLevelsDeleted e;
         // This main .qml has the DropArea wrapped into an Item with visible: false
         QQmlApplicationEngine engine(":/main343.qml");
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         serialized = saver.serializeLayout();
         QVERIFY(!serialized.isEmpty());
     }
@@ -513,7 +513,7 @@ void TestQtQuick::tst_effectiveVisibilityBug()
     // This main .qml has the DropArea wrapped into an Item with visible: true
     // restoring should restore the DropArea with visible true
     QQmlApplicationEngine engine(":/main343_2.qml");
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     QVERIFY(restorer.restoreLayout(serialized));
 
     const auto mainWindows = DockRegistry::self()->mainwindows();

@@ -43,7 +43,7 @@ class DOCKS_EXPORT FloatingWindow : public QtQuick::View
     Q_PROPERTY(KDDockWidgets::QtQuick::TitleBar *titleBar READ titleBar CONSTANT)
     Q_PROPERTY(KDDockWidgets::QtQuick::DropArea *dropArea READ dropArea CONSTANT)
 public:
-    explicit FloatingWindow(Core::FloatingWindow *controller,
+    explicit FloatingWindow(int ctx, Core::FloatingWindow *controller,
                             QtQuick::MainWindow *parent = nullptr,
                             Qt::WindowFlags flags = {});
     ~FloatingWindow();

@@ -59,6 +59,9 @@ public:
 
     QtQuickHelpers *helpers() const;
 
+    /// @brief Returns the KDDockWidgets ctx associated with this platform's QML engine.
+    int ctx() const;
+
     static Platform *instance();
 
     static Core::DockWidget *dockWidgetForItem(QQuickItem *);

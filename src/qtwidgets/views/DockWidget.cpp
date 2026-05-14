@@ -51,10 +51,10 @@ public:
     KDBindings::ScopedConnection isCurrentTabConnection;
 };
 
-DockWidget::DockWidget(const QString &uniqueName, DockWidgetOptions options,
+DockWidget::DockWidget(int ctx, const QString &uniqueName, DockWidgetOptions options,
                        LayoutSaverOptions layoutSaverOptions,
                        Qt::WindowFlags windowFlags)
-    : View<QWidget>(new Core::DockWidget(this, uniqueName, options, layoutSaverOptions),
+    : View<QWidget>(new Core::DockWidget(ctx, this, uniqueName, options, layoutSaverOptions),
                     Core::ViewType::DockWidget, nullptr, windowFlags)
     , Core::DockWidgetViewInterface(asDockWidgetController())
     , d(new Private(this))

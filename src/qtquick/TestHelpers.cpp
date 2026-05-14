@@ -147,7 +147,8 @@ Core::MainWindow *Platform::createMainWindow(const QString &uniqueName,
         Platform::instance()->tests_wait(100); // the root object gets sized delayed
     }
 
-    auto view = new QtQuick::MainWindow(uniqueName, options, parentItem, flags);
+    // TestHelpers is only used by KDDW's own tests; use ctx=0.
+    auto view = new QtQuick::MainWindow(0, uniqueName, options, parentItem, flags);
 
     return view->mainWindow();
 }

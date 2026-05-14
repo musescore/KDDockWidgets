@@ -32,11 +32,15 @@ class DOCKS_EXPORT MainWindowMDIInstantiator : public QQuickItem
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(MDIDockingArea)
+    Q_PROPERTY(int ctx READ ctx WRITE setCtx NOTIFY ctxChanged)
     Q_PROPERTY(QString uniqueName READ uniqueName WRITE setUniqueName NOTIFY uniqueNameChanged)
     Q_PROPERTY(QVector<QString> affinities READ affinities CONSTANT)
 public:
     ///@brief ctor, called by QML engine
     MainWindowMDIInstantiator();
+
+    int ctx() const;
+    void setCtx(int);
 
     QString uniqueName() const;
     void setUniqueName(const QString &);
@@ -53,10 +57,12 @@ protected:
     void componentComplete() override;
 
 Q_SIGNALS:
+    void ctxChanged();
     void uniqueNameChanged();
     void optionsChanged();
 
 private:
+    int m_ctx = 0;
     QString m_uniqueName;
     Core::MainWindow *m_mainWindow = nullptr;
 };

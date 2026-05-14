@@ -288,5 +288,5 @@ bool Group::closeAllDockWidgets()
 
 bool Group::tabsAtBottom() const
 {
-    return Config::self().tabsAtBottom();
+    return Config::self(m_group->ctx()).tabsAtBottom();
 }

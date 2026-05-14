@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     appEngine.load((QUrl("qrc:/main.qml")));
 
     // Access the main area we created in QML with DockingArea {}
-    // auto mainArea = KDDockWidgets::DockRegistry::self()->mainDockingAreas().constFirst();
+    // auto mainArea = KDDockWidgets::DockRegistry::self(0)->mainDockingAreas().constFirst();
 
     return app.exec();
 }

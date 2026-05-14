@@ -35,17 +35,18 @@ public:
     const bool enabled;
 };
 
-Draggable::Draggable(View *thisView, bool enabled)
+Draggable::Draggable(int ctx, View *thisView, bool enabled)
     : d(new Private(thisView, enabled))
+    , m_ctx(ctx)
 {
     if (thisView && d->enabled)
-        DragController::instance()->registerDraggable(this);
+        DragController::instance(m_ctx)->registerDraggable(this);
 }
 
 Draggable::~Draggable()
 {
     if (d->thisView && d->enabled)
-        DragController::instance()->unregisterDraggable(this);
+        DragController::instance(m_ctx)->unregisterDraggable(this);
 
     delete d->widgetResizeHandler;
     delete d;
@@ -66,7 +67,7 @@ Controller *Draggable::asController() const
 
 bool Draggable::dragCanStart(Point pressPos, Point globalPos) const
 {
-    return (globalPos - pressPos).manhattanLength() > Core::Platform::instance()->startDragDistance();
+    return (globalPos - pressPos).manhattanLength() > Core::Platform::instance()->startDragDistance(m_ctx);
 }
 
 void Draggable::setWidgetResizeHandler(WidgetResizeHandler *w)
@@ -78,5 +79,5 @@ void Draggable::setWidgetResizeHandler(WidgetResizeHandler *w)
 
 bool Draggable::isInProgrammaticDrag() const
 {
-    return DragController::instance()->isInProgrammaticDrag();
+    return DragController::instance(m_ctx)->isInProgrammaticDrag();
 }

@@ -28,6 +28,19 @@ MainWindowInstantiator::MainWindowInstantiator()
 {
 }
 
+int MainWindowInstantiator::ctx() const
+{
+    return m_ctx;
+}
+
+void MainWindowInstantiator::setCtx(int ctx)
+{
+    if (m_ctx == ctx)
+        return;
+    m_ctx = ctx;
+    Q_EMIT ctxChanged();
+}
+
 QString MainWindowInstantiator::uniqueName() const
 {
     return m_uniqueName;
@@ -197,7 +210,7 @@ void MainWindowInstantiator::componentComplete()
         return;
     }
 
-    if (DockRegistry::self()->containsMainWindow(m_uniqueName)) {
+    if (DockRegistry::self(m_ctx)->containsMainWindow(m_uniqueName)) {
         // MainWindow already exists
         return;
     }
@@ -216,9 +229,9 @@ void MainWindowInstantiator::componentComplete()
 
     Core::View *view = nullptr;
     if (mainWindowOptions & MainWindowOption_MDI) {
-        view = new QtQuick::MainWindowMDI(m_uniqueName, this);
+        view = new QtQuick::MainWindowMDI(m_ctx, m_uniqueName, this);
     } else {
-        view = new QtQuick::MainWindow(m_uniqueName, mainWindowOptions, this);
+        view = new QtQuick::MainWindow(m_ctx, m_uniqueName, mainWindowOptions, this);
         if ((mainWindowOptions & MainWindowOption_HasCentralWidget) && !m_persistentWidgetFileName.isEmpty()) {
             static_cast<QtQuick::MainWindow *>(view)->setPersistentCentralView(m_persistentWidgetFileName);
         }

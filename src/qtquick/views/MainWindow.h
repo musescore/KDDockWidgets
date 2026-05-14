@@ -47,7 +47,7 @@ public:
     ///@param options optional MainWindowOptions to use
     ///@param parent Visual parent item.
     ///@param flags Window flags to pass to top-level window, in case we're constructing it too
-    explicit MainWindow(const QString &uniqueName, MainWindowOptions options = {},
+    explicit MainWindow(int ctx, const QString &uniqueName, MainWindowOptions options = {},
                         QQuickItem *parent = nullptr, Qt::WindowFlags flags = {});
 
     ~MainWindow() override;

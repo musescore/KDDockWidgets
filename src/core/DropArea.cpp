@@ -65,10 +65,10 @@ namespace Core {
 class DropArea::Private
 {
 public:
-    explicit Private(DropArea *q, MainWindowOptions options, bool isMDIWrapper)
+    explicit Private(int ctx, DropArea *q, MainWindowOptions options, bool isMDIWrapper)
         : m_isMDIWrapper(isMDIWrapper)
         , m_dropIndicatorOverlay(createDropIndicatorOverlay(q))
-        , m_centralGroup(createCentralGroup(options))
+        , m_centralGroup(createCentralGroup(ctx, options))
     {
     }
 
@@ -84,9 +84,9 @@ public:
 
 }
 
-DropArea::DropArea(View *parent, MainWindowOptions options, bool isMDIWrapper)
-    : Layout(ViewType::DropArea, Config::self().viewFactory()->createDropArea(this, parent))
-    , d(new Private(this, options, isMDIWrapper))
+DropArea::DropArea(int ctx, View *parent, MainWindowOptions options, bool isMDIWrapper)
+    : Layout(ctx, ViewType::DropArea, Config::self(ctx).viewFactory()->createDropArea(this, parent))
+    , d(new Private(ctx, this, options, isMDIWrapper))
 {
     setRootItem(new Core::ItemBoxContainer(asLayoutingHost()));
 
@@ -233,11 +233,11 @@ void DropArea::_addDockWidget(Core::DockWidget *dw, Location location,
             // the group instead
             group = oldGroup;
         } else {
-            group = new Core::Group();
+            group = new Core::Group(m_ctx);
             group->addTab(dw);
         }
     } else {
-        group = new Core::Group();
+        group = new Core::Group(m_ctx);
         group->addTab(dw);
     }
 
@@ -294,7 +294,7 @@ void DropArea::layoutParentContainerEqually(Core::DockWidget *dw)
 
 DropLocation DropArea::hover(WindowBeingDragged *draggedWindow, Point globalPos)
 {
-    if (Config::self().dropIndicatorsInhibited() || !validateAffinity(draggedWindow))
+    if (Config::self(m_ctx).dropIndicatorsInhibited() || !validateAffinity(draggedWindow))
         return DropLocation_None;
 
     if (!d->m_dropIndicatorOverlay) {
@@ -375,7 +375,7 @@ bool DropArea::drop(WindowBeingDragged *draggedWindow, Core::Group *acceptingGro
 
     bool result = true;
     const bool needToFocusNewlyDroppedWidgets =
-        Config::self().flags() & Config::Flag_TitleBarIsFocusable;
+        Config::self(m_ctx).flags() & Config::Flag_TitleBarIsFocusable;
     const Core::DockWidget::List droppedDockWidgets = needToFocusNewlyDroppedWidgets
         ? droppedWindow->layout()->dockWidgets()
         : Core::DockWidget::List(); // just so save some memory allocations for the case
@@ -455,7 +455,7 @@ bool DropArea::drop(View *droppedWindow, KDDockWidgets::Location location,
         if (!validateAffinity(dock))
             return false;
 
-        auto group = new Core::Group();
+        auto group = new Core::Group(m_ctx);
         group->addTab(dock);
         Item *relativeToItem = relativeTo ? relativeTo->layoutItem() : nullptr;
         addWidget(group->view(), location, relativeToItem, DefaultSizeMode::FairButFloor);
@@ -484,14 +484,14 @@ void DropArea::removeHover()
 template<typename T>
 bool DropArea::validateAffinity(T *window, Core::Group *acceptingGroup) const
 {
-    if (!DockRegistry::self()->affinitiesMatch(window->affinities(), affinities())) {
+    if (!DockRegistry::self(m_ctx)->affinitiesMatch(window->affinities(), affinities())) {
         return false;
     }
 
     if (acceptingGroup) {
         // We're dropping into another group (as tabbed), so also check the affinity of the group
         // not only of the main window, which might be more forgiving
-        if (!DockRegistry::self()->affinitiesMatch(window->affinities(),
+        if (!DockRegistry::self(m_ctx)->affinitiesMatch(window->affinities(),
                                                    acceptingGroup->affinities())) {
             return false;
         }
@@ -514,7 +514,7 @@ Core::DockWidget *DropArea::mdiDockWidgetWrapper() const
     return nullptr;
 }
 
-Core::Group *DropArea::createCentralGroup(MainWindowOptions options)
+Core::Group *DropArea::createCentralGroup(int ctx, MainWindowOptions options)
 {
     Core::Group *group = nullptr;
 
@@ -529,7 +529,7 @@ Core::Group *DropArea::createCentralGroup(MainWindowOptions options)
             groupOptions |= FrameOption_AlwaysShowsTabs;
         }
 
-        group = new Core::Group(nullptr, groupOptions);
+        group = new Core::Group(ctx, nullptr, groupOptions);
         group->setObjectName(QStringLiteral("central group"));
     }
 
@@ -618,7 +618,7 @@ void DropArea::addWidget(View *w, Location location, Core::Item *relativeToItem,
         newItem->setGuest(group->asLayoutingGuest());
     } else if (dw) {
         newItem = new Core::Item(asLayoutingHost());
-        group = new Core::Group();
+        group = new Core::Group(m_ctx);
         newItem->setGuest(group->asLayoutingGuest());
         group->addTab(dw, option);
     } else if (auto ms = w->asDropAreaController()) {

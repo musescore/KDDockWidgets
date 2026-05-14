@@ -83,8 +83,9 @@ DebugAppEventFilter::~DebugAppEventFilter()
 {
 }
 
-DebugWindow::DebugWindow(QWidget *parent)
+DebugWindow::DebugWindow(int ctx, QWidget *parent)
     : QWidget(parent)
+    , m_ctx(ctx)
     , m_objectViewer(this)
 {
     // qGuiApp->installNativeEventFilter(new DebugAppEventFilter());
@@ -106,8 +107,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     hlay->addWidget(button);
     hlay->addWidget(spin);
 
-    connect(button, &QPushButton::clicked, this, [spin] {
-        auto docks = DockRegistry::self()->dockwidgets();
+    connect(button, &QPushButton::clicked, this, [this, spin] {
+        auto docks = DockRegistry::self(m_ctx)->dockwidgets();
         const int index = spin->value();
         if (index >= docks.size()) {
             QMessageBox::warning(nullptr, QStringLiteral("Invalid index"),
@@ -127,8 +128,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     hlay->addWidget(button);
     hlay->addWidget(lineedit);
 
-    connect(button, &QPushButton::clicked, this, [lineedit] {
-        auto dw = DockRegistry::self()->dockByName(lineedit->text());
+    connect(button, &QPushButton::clicked, this, [this, lineedit] {
+        auto dw = DockRegistry::self(m_ctx)->dockByName(lineedit->text());
         if (dw) {
             dw->open();
         } else {
@@ -141,8 +142,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     button = new QPushButton(this);
     button->setText(QStringLiteral("Float all visible docks"));
     layout->addWidget(button);
-    connect(button, &QPushButton::clicked, this, [] {
-        const auto docks = DockRegistry::self()->dockwidgets();
+    connect(button, &QPushButton::clicked, this, [this] {
+        const auto docks = DockRegistry::self(m_ctx)->dockwidgets();
         for (auto dw : docks) {
             if (dw->isVisible() && !dw->isFloating()) {
                 dw->setFloating(true);
@@ -154,8 +155,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     button->setText(QStringLiteral("Show All DockWidgets"));
     layout->addWidget(button);
     connect(button, &QPushButton::clicked, this, [this] {
-        QTimer::singleShot(3000, this, [] {
-            const auto docks = DockRegistry::self()->dockwidgets();
+        QTimer::singleShot(3000, this, [this] {
+            const auto docks = DockRegistry::self(m_ctx)->dockwidgets();
             for (auto dw : docks) {
                 dw->open();
             }
@@ -166,7 +167,7 @@ DebugWindow::DebugWindow(QWidget *parent)
     button->setText(QStringLiteral("Save layout"));
     layout->addWidget(button);
     connect(button, &QPushButton::clicked, this, [] {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QString message = saver.saveToFile(QStringLiteral("layout.json"))
             ? QStringLiteral("Saved!")
             : QStringLiteral("Error!");
@@ -177,7 +178,7 @@ DebugWindow::DebugWindow(QWidget *parent)
     button->setText(QStringLiteral("Restore layout"));
     layout->addWidget(button);
     connect(button, &QPushButton::clicked, this, [] {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         QString message = saver.restoreFromFile(QStringLiteral("layout.json"))
             ? QStringLiteral("Restored!")
             : QStringLiteral("Error!");
@@ -203,13 +204,13 @@ DebugWindow::DebugWindow(QWidget *parent)
     button = new QPushButton(this);
     button->setText(QStringLiteral("check sanity"));
     layout->addWidget(button);
-    connect(button, &QPushButton::clicked, this, [] {
-        const auto mainWindows = DockRegistry::self()->mainwindows();
+    connect(button, &QPushButton::clicked, this, [this] {
+        const auto mainWindows = DockRegistry::self(m_ctx)->mainwindows();
         for (MainWindow *mainWindow : mainWindows) {
             mainWindow->layout()->checkSanity();
         }
 
-        const auto floatingWindows = DockRegistry::self()->floatingWindows();
+        const auto floatingWindows = DockRegistry::self(m_ctx)->floatingWindows();
         for (auto floatingWindow : floatingWindows) {
             floatingWindow->layout()->checkSanity();
         }
@@ -218,8 +219,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     button = new QPushButton(this);
     button->setText(QStringLiteral("Detach central widget"));
     layout->addWidget(button);
-    connect(button, &QPushButton::clicked, this, [] {
-        const auto mainWindows = DockRegistry::self()->mainwindows();
+    connect(button, &QPushButton::clicked, this, [this] {
+        const auto mainWindows = DockRegistry::self(m_ctx)->mainwindows();
         if (mainWindows.isEmpty())
             return;
         auto mainwindow = mainWindows.at(0);
@@ -245,8 +246,8 @@ DebugWindow::DebugWindow(QWidget *parent)
     button->setText(QStringLiteral("Raise #0 (after 3s timeout)"));
     layout->addWidget(button);
     connect(button, &QPushButton::clicked, this, [this] {
-        QTimer::singleShot(3000, this, [] {
-            const auto docks = DockRegistry::self()->dockwidgets();
+        QTimer::singleShot(3000, this, [this] {
+            const auto docks = DockRegistry::self(m_ctx)->dockwidgets();
             if (!docks.isEmpty())
                 docks.constFirst()->raise();
         });
@@ -318,9 +319,9 @@ void DebugWindow::repaintWidgetRecursive(QWidget *w)
 void DebugWindow::dumpDockWidgetInfo()
 {
     const QVector<Core::FloatingWindow *> floatingWindows =
-        DockRegistry::self()->floatingWindows();
-    const MainWindow::List mainWindows = DockRegistry::self()->mainwindows();
-    const Core::DockWidget::List dockWidgets = DockRegistry::self()->dockwidgets();
+        DockRegistry::self(m_ctx)->floatingWindows();
+    const MainWindow::List mainWindows = DockRegistry::self(m_ctx)->mainwindows();
+    const Core::DockWidget::List dockWidgets = DockRegistry::self(m_ctx)->dockwidgets();
 
     for (Core::FloatingWindow *fw : floatingWindows) {
         qDebug() << fw << "; affinities=" << fw->affinities();

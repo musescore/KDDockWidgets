@@ -102,7 +102,7 @@ static bool lint(const QString &filename, LinterConfig config, bool isVerbose)
     }
 
     DockWidgetFactoryFunc dwFunc = [](const QString &dwName) {
-        return Config::self().viewFactory()->createDockWidget(dwName)->asDockWidgetController();
+        return Config::self(0).viewFactory()->createDockWidget(dwName)->asDockWidgetController();
     };
 
     /// MainWindow factory for the easy cases.
@@ -110,8 +110,8 @@ static bool lint(const QString &filename, LinterConfig config, bool isVerbose)
         return Platform::instance()->createMainWindow(mwName, {}, mainWindowOptions);
     };
 
-    KDDockWidgets::Config::self().setDockWidgetFactoryFunc(dwFunc);
-    KDDockWidgets::Config::self().setMainWindowFactoryFunc(mwFunc);
+    KDDockWidgets::Config::self(0).setDockWidgetFactoryFunc(dwFunc);
+    KDDockWidgets::Config::self(0).setMainWindowFactoryFunc(mwFunc);
 
     // Create the main windows specified from -c <file>
     for (auto mw : config.mainWindows) {
@@ -126,7 +126,7 @@ static bool lint(const QString &filename, LinterConfig config, bool isVerbose)
             mainWindow->view()->show();
     }
 
-    LayoutSaver restorer(config.restoreOptions);
+    LayoutSaver restorer(0,0, config.restoreOptions);
     return restorer.restoreFromFile(filename);
 }
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 #endif
 
     KDDockWidgets::initFrontend(frontendType);
-    KDDockWidgets::Config::self().setLayoutSaverStrictMode(parser.isSet(strictOpt));
+    KDDockWidgets::Config::self(0).setLayoutSaverStrictMode(parser.isSet(strictOpt));
 
     s_isVerbose = parser.isSet(verboseOpt);
     const LinterConfig lc = requestedLinterConfig(parser, parser.isSet(configFileOpt) ? parser.value(configFileOpt) : QString());
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
         // For debugging inspection purposes.
 
         QTimer::singleShot(1000, [] {
-            LayoutSaver saver;
+            LayoutSaver saver(0);
             const QByteArray saved = saver.serializeLayout();
             if (s_isVerbose)
                 qDebug() << "Testing if serialize works" << !saved.isEmpty();

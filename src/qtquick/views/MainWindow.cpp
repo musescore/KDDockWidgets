@@ -55,9 +55,9 @@ public:
 }
 
 
-MainWindow::MainWindow(const QString &uniqueName, MainWindowOptions options,
+MainWindow::MainWindow(int ctx, const QString &uniqueName, MainWindowOptions options,
                        QQuickItem *parent, Qt::WindowFlags flags)
-    : View(new Core::MainWindow(this, uniqueName, options), Core::ViewType::MainWindow, parent,
+    : View(new Core::MainWindow(ctx, this, uniqueName, options), Core::ViewType::MainWindow, parent,
            flags)
     , MainWindowViewInterface(static_cast<Core::MainWindow *>(View::controller()))
     , d(new Private(this))

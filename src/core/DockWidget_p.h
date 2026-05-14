@@ -102,7 +102,7 @@ public:
 
     Core::SideBar *sideBar() const
     {
-        return DockRegistry::self()->sideBarForDockWidget(q);
+        return DockRegistry::self(q->ctx())->sideBarForDockWidget(q);
     }
 
     ///@brief adds the current layout item containing this dock widget
@@ -277,7 +277,7 @@ public:
     const LayoutSaverOptions layoutSaverOptions;
     Action *const toggleAction;
     Action *const floatAction;
-    Positions::Ptr m_lastPositions = std::make_shared<Positions>();
+    Positions::Ptr m_lastPositions = std::make_shared<Positions>(q->ctx());
     bool m_isPersistentCentralDockWidget = false;
     bool m_processingToggleAction = false;
     bool m_updatingToggleAction = false;

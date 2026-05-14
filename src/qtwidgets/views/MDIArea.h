@@ -40,7 +40,7 @@ class DOCKS_EXPORT MDIArea : public QtWidgets::View<QWidget>
 {
     Q_OBJECT
 public:
-    explicit MDIArea(QWidget *parent = nullptr);
+    explicit MDIArea(int ctx, QWidget *parent = nullptr);
     ~MDIArea();
 
     /// @brief docks the dock widgets into this MDI area, at the specified position

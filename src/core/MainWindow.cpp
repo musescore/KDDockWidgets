@@ -43,24 +43,25 @@
 using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
-static Layout *createLayout(MainWindow *mainWindow, MainWindowOptions options)
+static Layout *createLayout(int ctx, MainWindow *mainWindow, MainWindowOptions options)
 {
     if (options & MainWindowOption_MDI)
-        return new MDILayout(mainWindow->view());
+        return new MDILayout(ctx, mainWindow->view());
 
-    return new DropArea(mainWindow->view(), options);
+    return new DropArea(ctx, mainWindow->view(), options);
 }
 
-MainWindow::MainWindow(View *view, const QString &uniqueName, MainWindowOptions options)
+MainWindow::MainWindow(int ctx, View *view, const QString &uniqueName, MainWindowOptions options)
     : Controller(ViewType::MainWindow, view)
     , d(new Private(this, uniqueName, options))
+    , m_ctx(ctx)
 {
 }
 
 void MainWindow::init(const QString &name)
 {
     d->init();
-    d->m_layout = createLayout(this, d->m_options);
+    d->m_layout = createLayout(m_ctx, this, d->m_options);
 
     d->m_persistentCentralDockWidget = d->createPersistentCentralDockWidget(d->name);
 
@@ -77,7 +78,7 @@ void MainWindow::init(const QString &name)
 
 MainWindow::~MainWindow()
 {
-    DockRegistry::self()->unregisterMainWindow(this);
+    DockRegistry::self(m_ctx)->unregisterMainWindow(this);
     delete d;
 }
 
@@ -86,7 +87,7 @@ void MainWindow::addDockWidgetAsTab(Core::DockWidget *widget)
     assert(widget);
     KDDW_DEBUG("dock={}", ( void * )widget);
 
-    if (!DockRegistry::self()->affinitiesMatch(d->affinities, widget->affinities())) {
+    if (!DockRegistry::self(m_ctx)->affinitiesMatch(d->affinities, widget->affinities())) {
         KDDW_ERROR("Refusing to dock widget with incompatible affinity. {} {}", widget->affinities(), affinities());
         return;
     }
@@ -536,7 +537,7 @@ void MainWindow::moveToSideBar(Core::DockWidget *dw, SideBarLocation location)
         sb->addDockWidget(dw);
     } else {
         // Shouldn't happen
-        KDDW_ERROR("Minimization supported, probably disabled in Config::self().flags()");
+        KDDW_ERROR("Minimization supported, probably disabled in Config::self(m_ctx).flags()");
     }
 }
 
@@ -581,7 +582,7 @@ void MainWindow::overlayOnSideBar(Core::DockWidget *dw)
     // We only support one overlay at a time, remove any existing overlay
     clearSideBarOverlay();
 
-    auto group = new Core::Group(nullptr, FrameOption_IsOverlayed);
+    auto group = new Core::Group(m_ctx, nullptr, FrameOption_IsOverlayed);
     group->setParentView(view());
     d->m_overlayedDockWidget = dw;
     group->addTab(dw);
@@ -726,7 +727,7 @@ void MainWindow::setUniqueName(const QString &uniqueName)
     if (d->name.isEmpty()) {
         d->name = uniqueName;
         d->uniqueNameChanged.emit();
-        DockRegistry::self()->registerMainWindow(this);
+        DockRegistry::self(m_ctx)->registerMainWindow(this);
     } else {
         KDDW_ERROR("Already has a name. {} {}", this->uniqueName(), uniqueName);
     }
@@ -756,7 +757,7 @@ bool MainWindow::deserialize(const LayoutSaver::MainWindow &mw)
         const Vector<QString> dockWidgets = mw.dockWidgetsForSideBar(loc);
         for (const QString &uniqueName : dockWidgets) {
 
-            Core::DockWidget *dw = DockRegistry::self()->dockByName(
+            Core::DockWidget *dw = DockRegistry::self(m_ctx)->dockByName(
                 uniqueName, DockRegistry::DockByNameFlag::CreateIfNotFound);
             if (!dw) {
                 KDDW_ERROR("Could not find dock widget {} . Won't restore it to sidebar", uniqueName);
@@ -771,7 +772,7 @@ bool MainWindow::deserialize(const LayoutSaver::MainWindow &mw)
 
     // Commented-out for now, we don't want to restore the popup/overlay. popups are perishable
     // if (!mw.overlayedDockWidget.isEmpty())
-    //    overlayOnSideBar(DockRegistry::self()->dockByName(mw.overlayedDockWidget));
+    //    overlayOnSideBar(DockRegistry::self(m_ctx)->dockByName(mw.overlayedDockWidget));
 
     return success;
 }

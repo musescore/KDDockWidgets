@@ -58,13 +58,13 @@ Core::Item *Core::Group::s_inFloatHack = nullptr;
 
 namespace KDDockWidgets {
 
-static FrameOptions actualOptions(FrameOptions options)
+static FrameOptions actualOptions(int ctx, FrameOptions options)
 {
     // Center group has custom logic for showing tabs or not
     const bool isCentralGroup = options & FrameOption_IsCentralFrame;
 
     if (!isCentralGroup) {
-        if (Config::self().flags() & Config::Flag_AlwaysShowTabs) {
+        if (Config::self(ctx).flags() & Config::Flag_AlwaysShowTabs) {
             options |= FrameOption_AlwaysShowsTabs;
         } else {
             // options could have came from a JSON layout which was saved from a Config with Flag_AlwaysShowTabs
@@ -88,16 +88,17 @@ static StackOptions tabWidgetOptions(FrameOptions options)
 
 }
 
-Group::Group(View *parent, FrameOptions options, int userType)
-    : Controller(ViewType::Group, Config::self().viewFactory()->createGroup(this, parent))
+Group::Group(int ctx, View *parent, FrameOptions options, int userType)
+    : Controller(ViewType::Group, Config::self(ctx).viewFactory()->createGroup(this, parent))
     , FocusScope(view())
-    , d(new Private(this, userType, actualOptions(options)))
-    , m_stack(new Core::Stack(this, tabWidgetOptions(options)))
+    , d(new Private(this, userType, actualOptions(ctx, options)))
+    , m_stack(new Core::Stack(ctx, this, tabWidgetOptions(options)))
     , m_tabBar(m_stack->tabBar())
-    , m_titleBar(new Core::TitleBar(this))
+    , m_titleBar(new Core::TitleBar(ctx, this))
+    , m_ctx(ctx)
 {
     s_dbg_numFrames++;
-    DockRegistry::self()->registerGroup(this);
+    DockRegistry::self(m_ctx)->registerGroup(this);
 
     m_tabBar->dptr()->currentDockWidgetChanged.connect([this] {
         updateTitleAndIcon();
@@ -122,7 +123,7 @@ Group::~Group()
     delete m_resizeHandler;
     m_resizeHandler = nullptr;
 
-    DockRegistry::self()->unregisterGroup(this);
+    DockRegistry::self(m_ctx)->unregisterGroup(this);
 
     // Run some disconnects() too, so we don't receive signals during destruction:
     setLayout(nullptr);
@@ -322,14 +323,14 @@ FloatingWindow *Group::detachTab(DockWidget *dockWidget)
     Rect r = dockWidget->geometry();
     removeWidget(dockWidget);
 
-    auto newGroup = new Group();
+    auto newGroup = new Group(m_ctx);
     const Point globalPoint = mapToGlobal(Point(0, 0));
     newGroup->addTab(dockWidget);
 
     // We're potentially already dead at this point, as groups with 0 tabs auto-destruct. Don't
     // access members from this point.
 
-    auto floatingWindow = new FloatingWindow(newGroup, {});
+    auto floatingWindow = new FloatingWindow(m_ctx, newGroup, {});
     r.moveTopLeft(globalPoint);
     floatingWindow->setSuggestedGeometry(r, SuggestedGeometryHint_GeometryIsFromDocked);
     floatingWindow->view()->show();
@@ -451,7 +452,7 @@ void Group::updateTitleBarVisibility()
     bool visible = false;
     if (isCentralGroup()) {
         visible = false;
-    } else if ((Config::self().flags() & Config::Flag_HideTitleBarWhenTabsVisible)
+    } else if ((Config::self(m_ctx).flags() & Config::Flag_HideTitleBarWhenTabsVisible)
                && hasTabsVisible()) {
         visible = false;
     } else if (FloatingWindow *fw = floatingWindow()) {
@@ -724,12 +725,12 @@ bool Group::isInMainWindow() const
     return mainWindow() != nullptr;
 }
 
-Group *Group::deserialize(const LayoutSaver::Group &f)
+Group *Group::deserialize(int ctx, const LayoutSaver::Group &f)
 {
-    if (!f.isValid())
+    if (!f.isValid(ctx))
         return nullptr;
 
-    const FrameOptions options = actualOptions(FrameOptions(f.options));
+    const FrameOptions options = actualOptions(ctx, FrameOptions(f.options));
     Group *group = nullptr;
     const bool isPersistentCentralFrame = options & FrameOption::FrameOption_IsCentralFrame;
 
@@ -742,7 +743,7 @@ Group *Group::deserialize(const LayoutSaver::Group &f)
             KDDW_ERROR("Group is the persistent central group but doesn't have"
                        "an associated window name");
         } else {
-            if (MainWindow *mw = DockRegistry::self()->mainWindowByName(f.mainWindowUniqueName)) {
+            if (MainWindow *mw = DockRegistry::self(ctx)->mainWindowByName(f.mainWindowUniqueName)) {
                 group = mw->dropArea()->centralGroup();
                 if (!group) {
                     // Doesn't happen...
@@ -756,12 +757,12 @@ Group *Group::deserialize(const LayoutSaver::Group &f)
     }
 
     if (!group)
-        group = new Group(nullptr, options);
+        group = new Group(ctx, nullptr, options);
 
     group->setObjectName(f.objectName);
 
     for (const auto &savedDock : std::as_const(f.dockWidgets)) {
-        if (DockWidget *dw = DockWidget::deserialize(savedDock)) {
+        if (DockWidget *dw = DockWidget::deserialize(ctx, savedDock)) {
             group->addTab(dw);
         }
     }
@@ -818,7 +819,7 @@ void Group::scheduleDeleteLater()
 void Group::createMDIResizeHandler()
 {
     delete m_resizeHandler;
-    m_resizeHandler = new WidgetResizeHandler(WidgetResizeHandler::EventFilterMode::Global,
+    m_resizeHandler = new WidgetResizeHandler(m_ctx, WidgetResizeHandler::EventFilterMode::Global,
                                               WidgetResizeHandler::WindowMode::MDI, view());
 
     if (Platform::instance()->isQtQuick()) {

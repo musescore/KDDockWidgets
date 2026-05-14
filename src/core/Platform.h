@@ -105,7 +105,7 @@ public:
     /// This is usually 4 by default (QApplication::startDragDistance() for QtWidgets)
     /// You can override by calling Config::setStartDragDistance(), so you don't need to create
     /// a new Platform class.
-    int startDragDistance() const;
+    int startDragDistance(int ctx) const;
 
     /// @brief Return whether we use the global event filter based mouse grabber
     virtual bool usesFallbackMouseGrabber() const = 0;

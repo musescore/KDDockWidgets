@@ -37,11 +37,14 @@ class DOCKS_EXPORT FloatingWindow : public Controller, public Draggable
     Q_OBJECT
 public:
     explicit FloatingWindow(
+        int ctx,
         Rect suggestedGeometry, MainWindow *parent = nullptr,
         FloatingWindowFlags requestedFlags = FloatingWindowFlag::FromGlobalConfig);
-    explicit FloatingWindow(Core::Group *group, Rect suggestedGeometry,
+    explicit FloatingWindow(int ctx, Core::Group *group, Rect suggestedGeometry,
                             MainWindow *parent = nullptr);
     virtual ~FloatingWindow() override;
+
+    using Draggable::ctx;
 
     bool deserialize(const LayoutSaver::FloatingWindow &);
     LayoutSaver::FloatingWindow serialize() const;

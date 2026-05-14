@@ -33,18 +33,20 @@ class DOCKS_EXPORT TitleBar : public Controller, public Draggable
     Q_OBJECT
 public:
     /// Creates the TitleBar used by Floating windows
-    explicit TitleBar(FloatingWindow *parent);
+    explicit TitleBar(int ctx, FloatingWindow *parent);
 
     /// Creates the TitleBar used by tab groups
-    explicit TitleBar(Group *parent);
+    explicit TitleBar(int ctx, Group *parent);
 
     /// Creates a standalone TitleBar
     /// That means it's not associated with any docking. To allow users to reuse it.
     /// For example, to add a title bar to a QMessageBox popup on EGLFS
     /// @sa isStandalone()
-    explicit TitleBar(Core::View *);
+    explicit TitleBar(int ctx, Core::View *);
 
     virtual ~TitleBar() override;
+
+    using Draggable::ctx;
 
     /// From Draggable interface
     bool isMDI() const override;

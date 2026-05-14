@@ -387,8 +387,8 @@ static void from_json(const nlohmann::json &json, typename LayoutSaver::DockWidg
 
 }
 
-LayoutSaver::LayoutSaver(RestoreOptions options)
-    : d(new Private(options))
+LayoutSaver::LayoutSaver(int ctx, RestoreOptions options)
+    : d(new Private(ctx, options))
 {
     d->m_dockRegistry->registerLayoutSaver();
 }
@@ -508,11 +508,11 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
         return false;
     }
 
-    if (!layout.isValid()) {
+    if (!layout.isValid(d->m_dockRegistry->ctx())) {
         return false;
     }
 
-    layout.scaleSizes(d->m_restoreOptions);
+    layout.scaleSizes(d->m_dockRegistry->ctx(), d->m_restoreOptions);
 
     d->floatWidgetsWhichSkipRestore(layout.mainWindowNames());
     d->floatUnknownWidgets(layout);
@@ -522,7 +522,7 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
     // Hide all dockwidgets and unparent them from any layout before starting restore
     // We only close the stuff that the loaded JSON knows about. Unknown widgets might be newer.
 
-    d->m_dockRegistry->clear(d->m_dockRegistry->dockWidgets(layout.dockWidgetsToClose()),
+    d->m_dockRegistry->clear(d->m_dockRegistry->dockWidgets(layout.dockWidgetsToClose(d->m_dockRegistry->ctx())),
                              d->m_dockRegistry->mainWindows(layout.mainWindowNames()),
                              d->m_affinityNames);
 
@@ -530,7 +530,7 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
     for (const LayoutSaver::MainWindow &mw : std::as_const(layout.mainWindows)) {
         auto mainWindow = d->m_dockRegistry->mainWindowByName(mw.uniqueName);
         if (!mainWindow) {
-            if (auto mwFunc = Config::self().mainWindowFactoryFunc()) {
+            if (auto mwFunc = Config::self(d->m_dockRegistry->ctx()).mainWindowFactoryFunc()) {
                 mainWindow = mwFunc(mw.uniqueName, mw.options);
             } else {
                 KDDW_ERROR("Failed to restore layout create MainWindow with name {} first", mw.uniqueName);
@@ -559,17 +559,18 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
 
     // 2. Restore FloatingWindows
     for (LayoutSaver::FloatingWindow &fw : layout.floatingWindows) {
-        if (!d->matchesAffinity(fw.affinities) || fw.skipsRestore())
+        if (!d->matchesAffinity(fw.affinities) || fw.skipsRestore(d->m_dockRegistry->ctx()))
             continue;
 
+        const int ctx = d->m_dockRegistry->ctx();
         auto parent =
-            fw.parentIndex == -1 ? nullptr : DockRegistry::self()->mainwindows().at(fw.parentIndex);
+            fw.parentIndex == -1 ? nullptr : DockRegistry::self(ctx)->mainwindows().at(fw.parentIndex);
 
         auto flags = static_cast<FloatingWindowFlags>(fw.flags);
         flags.setFlag(FloatingWindowFlag::StartsMinimized, int(fw.windowState) & int(WindowState::Minimized));
 
         auto floatingWindow =
-            new Core::FloatingWindow({}, parent, flags);
+            new Core::FloatingWindow(ctx, {}, parent, flags);
         fw.floatingWindowInstance = floatingWindow;
         d->deserializeWindowGeometry(fw, floatingWindow->view()->window());
         if (!floatingWindow->deserialize(fw)) {
@@ -582,7 +583,7 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
     // properties
     for (const auto &dw : std::as_const(layout.closedDockWidgets)) {
         if (d->matchesAffinity(dw->affinities)) {
-            Core::DockWidget::deserialize(dw);
+            Core::DockWidget::deserialize(d->m_dockRegistry->ctx(), dw);
         }
     }
 
@@ -599,7 +600,7 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
             dockWidget->d->lastPosition()->deserialize(dw->lastPosition);
         } else {
             KDDW_INFO("Couldn't find dock widget {}", dw->uniqueName);
-            auto pos = std::make_shared<KDDockWidgets::Positions>();
+            auto pos = std::make_shared<KDDockWidgets::Positions>(d->m_dockRegistry->ctx());
             pos->deserialize(dw->lastPosition);
             LayoutSaver::Private::s_unrestoredPositions[dw->uniqueName] = pos;
             LayoutSaver::Private::s_unrestoredProperties[dw->uniqueName] = dw->lastCloseReason;
@@ -625,7 +626,7 @@ LayoutSaver::Private *LayoutSaver::dptr() const
 
 Core::DockWidget::List LayoutSaver::restoredDockWidgets() const
 {
-    const Core::DockWidget::List &allDockWidgets = DockRegistry::self()->dockwidgets();
+    const Core::DockWidget::List &allDockWidgets = DockRegistry::self(d->m_dockRegistry->ctx())->dockwidgets();
     Core::DockWidget::List result;
     result.reserve(allDockWidgets.size());
     for (Core::DockWidget *dw : allDockWidgets) {
@@ -638,7 +639,7 @@ Core::DockWidget::List LayoutSaver::restoredDockWidgets() const
 
 void LayoutSaver::Private::clearRestoredProperty()
 {
-    const Core::DockWidget::List &allDockWidgets = DockRegistry::self()->dockwidgets();
+    const Core::DockWidget::List &allDockWidgets = DockRegistry::self(m_dockRegistry->ctx())->dockwidgets();
     for (Core::DockWidget *dw : allDockWidgets) {
         dw->d->m_wasRestored = false;
     }
@@ -675,8 +676,8 @@ void LayoutSaver::Private::deserializeWindowGeometry(const T &saved, Window::Ptr
     window->setVisible(saved.isVisible);
 }
 
-LayoutSaver::Private::Private(RestoreOptions options)
-    : m_dockRegistry(DockRegistry::self())
+LayoutSaver::Private::Private(int ctx, RestoreOptions options)
+    : m_dockRegistry(DockRegistry::self(ctx))
     , m_restoreOptions(internalRestoreOptions(options))
 {
 }
@@ -707,7 +708,7 @@ void LayoutSaver::Private::restorePendingPositions(Core::DockWidget *dw)
 bool LayoutSaver::Private::matchesAffinity(const Vector<QString> &affinities) const
 {
     return m_affinityNames.isEmpty() || affinities.isEmpty()
-        || DockRegistry::self()->affinitiesMatch(m_affinityNames, affinities);
+        || DockRegistry::self(m_dockRegistry->ctx())->affinitiesMatch(m_affinityNames, affinities);
 }
 
 void LayoutSaver::Private::floatWidgetsWhichSkipRestore(const Vector<QString> &mainWindowNames)
@@ -717,7 +718,7 @@ void LayoutSaver::Private::floatWidgetsWhichSkipRestore(const Vector<QString> &m
     // If they were previously docked we need to float them, as the main window they were on will
     // be loading a new layout.
 
-    const auto mainWindows = DockRegistry::self()->mainWindows(mainWindowNames);
+    const auto mainWindows = DockRegistry::self(m_dockRegistry->ctx())->mainWindows(mainWindowNames);
     for (auto mw : mainWindows) {
         const Core::DockWidget::List docks = mw->layout()->dockWidgets();
         for (auto dw : docks) {
@@ -734,7 +735,7 @@ void LayoutSaver::Private::floatUnknownWidgets(const LayoutSaver::Layout &layout
     // When restoring such a file, we need to float any visible dock widgets which it doesn't know
     // about so we can restore the MainWindow layout properly
 
-    const auto mainWindows = DockRegistry::self()->mainWindows(layout.mainWindowNames());
+    const auto mainWindows = DockRegistry::self(m_dockRegistry->ctx())->mainWindows(layout.mainWindowNames());
     for (auto mw : mainWindows) {
         const Core::DockWidget::List docks = mw->layout()->dockWidgets();
         for (Core::DockWidget *dw : docks) {
@@ -769,7 +770,7 @@ bool LayoutSaver::restoreInProgress()
     return Private::s_restoreInProgress;
 }
 
-bool LayoutSaver::Layout::isValid() const
+bool LayoutSaver::Layout::isValid(int ctx) const
 {
     if (serializationVersion != KDDOCKWIDGETS_SERIALIZATION_VERSION) {
         KDDW_ERROR("Serialization format is too old {}, current={}", serializationVersion, KDDOCKWIDGETS_SERIALIZATION_VERSION);
@@ -777,12 +778,12 @@ bool LayoutSaver::Layout::isValid() const
     }
 
     for (auto &m : mainWindows) {
-        if (!m.isValid())
+        if (!m.isValid(ctx))
             return false;
     }
 
     for (auto &m : floatingWindows) {
-        if (!m.isValid())
+        if (!m.isValid(ctx))
             return false;
     }
 
@@ -913,7 +914,7 @@ bool LayoutSaver::Layout::fromJson(const QByteArray &jsonData)
     return true;
 }
 
-void LayoutSaver::Layout::scaleSizes(InternalRestoreOptions options)
+void LayoutSaver::Layout::scaleSizes(int ctx, InternalRestoreOptions options)
 {
     if (mainWindows.isEmpty())
         return;
@@ -929,7 +930,7 @@ void LayoutSaver::Layout::scaleSizes(InternalRestoreOptions options)
     // we need to scale all dock widgets inside the layout, as the layout might not have
     // the same size as specified in the saved JSON layout
     for (auto &mw : mainWindows)
-        mw.scaleSizes();
+        mw.scaleSizes(ctx);
 
 
     // MainWindow has a different size than the one in JSON, so we also restore FloatingWindows
@@ -994,14 +995,14 @@ Vector<QString> LayoutSaver::Layout::dockWidgetNames() const
     return names;
 }
 
-Vector<QString> LayoutSaver::Layout::dockWidgetsToClose() const
+Vector<QString> LayoutSaver::Layout::dockWidgetsToClose(int ctx) const
 {
     // Before restoring a layout we close all dock widgets, unless they're a floating window with
     // the DontCloseBeforeRestore flag
 
     Vector<QString> names;
     names.reserve(allDockWidgets.size());
-    auto registry = DockRegistry::self();
+    auto registry = DockRegistry::self(ctx);
     for (const auto &dw : allDockWidgets) {
         if (Core::DockWidget *dockWidget = registry->dockByName(dw->uniqueName)) {
 
@@ -1034,7 +1035,7 @@ bool LayoutSaver::Layout::containsDockWidget(const QString &uniqueName) const
         != allDockWidgets.cend();
 }
 
-bool LayoutSaver::Group::isValid() const
+bool LayoutSaver::Group::isValid(int ctx) const
 {
     if (isNull)
         return true;
@@ -1052,7 +1053,7 @@ bool LayoutSaver::Group::isValid() const
     if (!dockWidgets.isEmpty()) {
         if (currentTabIndex >= dockWidgets.size() || currentTabIndex < 0) {
 
-            if (dockWidgets.isEmpty() || KDDockWidgets::Config::self().layoutSaverUsesStrictMode()) {
+            if (dockWidgets.isEmpty() || KDDockWidgets::Config::self(ctx).layoutSaverUsesStrictMode()) {
                 KDDW_ERROR("Invalid tab index = {}, size = {}", currentTabIndex, dockWidgets.size());
                 return false;
             }
@@ -1076,10 +1077,10 @@ bool LayoutSaver::Group::hasSingleDockWidget() const
     return dockWidgets.size() == 1;
 }
 
-bool LayoutSaver::Group::skipsRestore() const
+bool LayoutSaver::Group::skipsRestore(int ctx) const
 {
     return std::all_of(dockWidgets.cbegin(), dockWidgets.cend(),
-                       [](LayoutSaver::DockWidget::Ptr dw) { return dw->skipsRestore(); });
+                       [ctx](LayoutSaver::DockWidget::Ptr dw) { return dw->skipsRestore(ctx); });
 }
 
 LayoutSaver::DockWidget::Ptr LayoutSaver::Group::singleDockWidget() const
@@ -1100,17 +1101,17 @@ void LayoutSaver::DockWidget::scaleSizes(const ScalingInfo &scalingInfo)
     lastPosition.scaleSizes(scalingInfo);
 }
 
-bool LayoutSaver::DockWidget::skipsRestore() const
+bool LayoutSaver::DockWidget::skipsRestore(int ctx) const
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(uniqueName))
+    if (Core::DockWidget *dw = DockRegistry::self(ctx)->dockByName(uniqueName))
         return dw->skipsRestore();
 
     return false;
 }
 
-bool LayoutSaver::FloatingWindow::isValid() const
+bool LayoutSaver::FloatingWindow::isValid(int ctx) const
 {
-    if (!multiSplitterLayout.isValid())
+    if (!multiSplitterLayout.isValid(ctx))
         return false;
 
     if (!geometry.isValid()) {
@@ -1131,9 +1132,9 @@ LayoutSaver::DockWidget::Ptr LayoutSaver::FloatingWindow::singleDockWidget() con
     return multiSplitterLayout.singleDockWidget();
 }
 
-bool LayoutSaver::FloatingWindow::skipsRestore() const
+bool LayoutSaver::FloatingWindow::skipsRestore(int ctx) const
 {
-    return multiSplitterLayout.skipsRestore();
+    return multiSplitterLayout.skipsRestore(ctx);
 }
 
 void LayoutSaver::FloatingWindow::scaleSizes(const ScalingInfo &scalingInfo)
@@ -1141,9 +1142,9 @@ void LayoutSaver::FloatingWindow::scaleSizes(const ScalingInfo &scalingInfo)
     scalingInfo.applyFactorsTo(/*by-ref*/ geometry);
 }
 
-bool LayoutSaver::MainWindow::isValid() const
+bool LayoutSaver::MainWindow::isValid(int ctx) const
 {
-    return multiSplitterLayout.isValid();
+    return multiSplitterLayout.isValid(ctx);
 }
 
 Vector<QString> LayoutSaver::MainWindow::dockWidgetsForSideBar(SideBarLocation loc) const
@@ -1152,7 +1153,7 @@ Vector<QString> LayoutSaver::MainWindow::dockWidgetsForSideBar(SideBarLocation l
     return it == dockWidgetsPerSideBar.cend() ? Vector<QString>() : it->second;
 }
 
-void LayoutSaver::MainWindow::scaleSizes()
+void LayoutSaver::MainWindow::scaleSizes(int ctx)
 {
     if (scalingInfo.isValid()) {
         // Doesn't happen, it's called only once
@@ -1160,11 +1161,12 @@ void LayoutSaver::MainWindow::scaleSizes()
         return;
     }
 
-    scalingInfo = ScalingInfo(uniqueName, geometry, screenIndex);
+    scalingInfo = ScalingInfo(ctx, uniqueName, geometry, screenIndex);
 }
 
-bool LayoutSaver::MultiSplitter::isValid() const
+bool LayoutSaver::MultiSplitter::isValid(int ctx) const
 {
+    (void)ctx;
     return layout.is_object() && !layout.empty();
 }
 
@@ -1182,10 +1184,10 @@ LayoutSaver::DockWidget::Ptr LayoutSaver::MultiSplitter::singleDockWidget() cons
     return group.singleDockWidget();
 }
 
-bool LayoutSaver::MultiSplitter::skipsRestore() const
+bool LayoutSaver::MultiSplitter::skipsRestore(int ctx) const
 {
     return std::all_of(groups.cbegin(), groups.cend(),
-                       [](auto it) { return it.second.skipsRestore(); });
+                       [ctx](auto it) { return it.second.skipsRestore(ctx); });
 }
 
 void LayoutSaver::Position::scaleSizes(const ScalingInfo &scalingInfo)
@@ -1202,10 +1204,10 @@ Core::Screen::Ptr screenForMainWindow(Core::MainWindow *mw)
 
 }
 
-LayoutSaver::ScalingInfo::ScalingInfo(const QString &mainWindowId, Rect savedMainWindowGeo,
+LayoutSaver::ScalingInfo::ScalingInfo(int ctx, const QString &mainWindowId, Rect savedMainWindowGeo,
                                       int screenIndex)
 {
-    auto mainWindow = DockRegistry::self()->mainWindowByName(mainWindowId);
+    auto mainWindow = DockRegistry::self(ctx)->mainWindowByName(mainWindowId);
     if (!mainWindow) {
         KDDW_ERROR("Failed to find main window with name {}", mainWindowId);
         return;

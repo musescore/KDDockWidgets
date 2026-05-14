@@ -56,7 +56,7 @@ void TitleBar::init()
 
 bool TitleBar::event(QEvent *ev)
 {
-    if (Config::self().flags() & KDDockWidgets::Config::Flag_TitleBarIsFocusable) {
+    if (Config::self(m_titleBar->ctx()).flags() & KDDockWidgets::Config::Flag_TitleBarIsFocusable) {
         if (ev->type() == QEvent::MouseButtonPress) {
             // Core::TitleBar will forward focus to the correct group
             m_titleBar->focus(Qt::MouseFocusReason);

@@ -22,6 +22,8 @@
 #include "kddockwidgets/docks_export.h"
 #include "kddockwidgets/KDDockWidgets.h"
 
+#include <functional>
+
 namespace KDDockWidgets {
 
 namespace Core {
@@ -33,7 +35,7 @@ class ViewFactory;
 class Group;
 }
 
-typedef KDDockWidgets::Core::DockWidget *(*DockWidgetFactoryFunc)(const QString &name);
+using DockWidgetFactoryFunc = std::function<KDDockWidgets::Core::DockWidget *(const QString &name)>;
 typedef KDDockWidgets::Core::MainWindow *(*MainWindowFactoryFunc)(const QString &name, KDDockWidgets::MainWindowOptions);
 typedef bool (*DragAboutToStartFunc)(Core::Draggable *draggable);
 typedef void (*DragEndedFunc)();
@@ -65,8 +67,11 @@ typedef bool (*DropIndicatorAllowedFunc)(DropLocation location,
 class DOCKS_EXPORT Config
 {
 public:
-    ///@brief returns the singleton Config instance
-    static Config &self();
+    ///@brief Returns the Config bound to the given context. Owned by ContextData.
+    static Config &self(int ctx);
+
+    ///@brief Constructs a per-context Config. Used by ContextData.
+    explicit Config(int ctx);
 
     ///@brief destructor, called at shutdown
     ~Config();
@@ -205,10 +210,10 @@ public:
     void setMDIFlags(MDIFlags);
 
     ///@brief Returns whether the specified flag is set or not
-    static bool hasFlag(Flag);
+    static bool hasFlag(int ctx, Flag);
 
     ///@brief Returns whether the specified MDI flag is set or not
-    static bool hasMDIFlag(MDIFlag);
+    static bool hasMDIFlag(int ctx, MDIFlag);
 
     /**
      * @brief Registers a DockWidgetFactoryFunc.

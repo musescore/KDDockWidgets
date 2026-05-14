@@ -70,7 +70,7 @@ FloatingWindow::~FloatingWindow()
 
 void FloatingWindow::paintEvent(QPaintEvent *ev)
 {
-    if (Config::self().disabledPaintEvents() & Config::CustomizableWidget_FloatingWindow) {
+    if (Config::self(floatingWindow()->ctx()).disabledPaintEvents() & Config::CustomizableWidget_FloatingWindow) {
         QWidget::paintEvent(ev);
         return;
     }
@@ -88,9 +88,9 @@ void FloatingWindow::paintEvent(QPaintEvent *ev)
 bool FloatingWindow::event(QEvent *ev)
 {
     if (ev->type() == QEvent::NonClientAreaMouseButtonDblClick
-        && (Config::self().flags() & Config::Flag_NativeTitleBar)) {
+        && (Config::self(floatingWindow()->ctx()).flags() & Config::Flag_NativeTitleBar)) {
         if ((windowFlags() & Qt::Tool) == Qt::Tool) {
-            if (Config::self().flags() & Config::Flag_DoubleClickMaximizes) {
+            if (Config::self(floatingWindow()->ctx()).flags() & Config::Flag_DoubleClickMaximizes) {
                 // Let's refuse to maximize Qt::Tool. It's not natural.
                 // Just avoid this combination: Flag_NativeTitleBar + Qt::Tool +
                 // Flag_DoubleClickMaximizes
@@ -110,8 +110,9 @@ bool FloatingWindow::event(QEvent *ev)
         // We connect after QEvent::Show, so we have a QWindow. Qt doesn't offer much API to
         // intercept screen events
         d->m_connectedToScreenChanged = true;
-        window()->onScreenChanged(this, [](QObject *, auto window) {
-            DockRegistry::self()->dptr()->windowChangedScreen.emit(window);
+        window()->onScreenChanged(this, [](QObject *context, auto window) {
+            auto fw = qobject_cast<FloatingWindow *>(context);
+            DockRegistry::self(fw->floatingWindow()->ctx())->dptr()->windowChangedScreen.emit(window);
         });
 
         QWidget::windowHandle()->installEventFilter(this);
@@ -137,7 +138,7 @@ void FloatingWindow::init()
     d->m_vlayout->addWidget(View_qt::asQWidget(d->m_controller->titleBar()));
     d->m_vlayout->addWidget(View_qt::asQWidget(d->m_controller->dropArea()));
 
-    d->m_screenChangedConnection = DockRegistry::self()->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
+    d->m_screenChangedConnection = DockRegistry::self(floatingWindow()->ctx())->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
         if (View::d->isInWindow(w))
             updateMargins();
     });
@@ -193,7 +194,7 @@ bool FloatingWindow::nativeEvent(const QByteArray &eventType, void *message,
         auto msg = static_cast<MSG *>(message);
         if (msg->message == WM_SIZING) {
             // Cancel any drag if we're resizing
-            Core::DragController::instance()->dragCanceled.emit();
+            Core::DragController::instance(floatingWindow()->ctx())->dragCanceled.emit();
         }
     }
 

@@ -50,12 +50,12 @@ inline bool isWindows()
     return Core::Platform::instance()->displayType() == Core::Platform::DisplayType::Windows;
 }
 
-inline bool usesNativeTitleBar()
+inline bool usesNativeTitleBar(int ctx = 0)
 {
-    return Config::self().flags() & Config::Flag_NativeTitleBar;
+    return Config::self(ctx).flags() & Config::Flag_NativeTitleBar;
 }
 
-inline bool usesClientTitleBar()
+inline bool usesClientTitleBar(int ctx = 0)
 {
     if (isWayland()) {
         // Wayland has both client and native title bars, due to limitations.
@@ -64,20 +64,20 @@ inline bool usesClientTitleBar()
 
     // All other platforms have either the OS native title bar or a Qt title bar (aka client title
     // bar).
-    return !usesNativeTitleBar();
+    return !usesNativeTitleBar(ctx);
 }
 
-inline bool usesAeroSnapWithCustomDecos()
+inline bool usesAeroSnapWithCustomDecos(int ctx = 0)
 {
-    return Config::self().flags() & Config::Flag_AeroSnapWithClientDecos;
+    return Config::self(ctx).flags() & Config::Flag_AeroSnapWithClientDecos;
 }
 
-inline bool usesNativeDraggingAndResizing()
+inline bool usesNativeDraggingAndResizing(int ctx = 0)
 {
     // a native title bar implies native resizing and dragging
     // Windows Aero-Snap also implies native dragging, and implies no native-title bar
-    assert(!(usesNativeTitleBar() && usesAeroSnapWithCustomDecos()));
-    return usesNativeTitleBar() || usesAeroSnapWithCustomDecos();
+    assert(!(usesNativeTitleBar(ctx) && usesAeroSnapWithCustomDecos(ctx)));
+    return usesNativeTitleBar(ctx) || usesAeroSnapWithCustomDecos(ctx);
 }
 
 inline bool linksToXLib()
@@ -89,7 +89,7 @@ inline bool linksToXLib()
 #endif
 }
 
-inline bool usesQTBUG83030Workaround()
+inline bool usesQTBUG83030Workaround(int ctx)
 {
     const bool useWorkaround =
 
@@ -98,7 +98,7 @@ inline bool usesQTBUG83030Workaround()
         false;
 #else
         // Workaround by default, unless explicitly told not to
-        !(Config::self().internalFlags() & Config::InternalFlag_NoDeleteLaterWorkaround);
+        !(Config::self(ctx).internalFlags() & Config::InternalFlag_NoDeleteLaterWorkaround);
 #endif
 
     return useWorkaround;

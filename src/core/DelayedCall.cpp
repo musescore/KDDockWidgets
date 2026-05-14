@@ -30,7 +30,7 @@ DelayedDelete::~DelayedDelete() = default;
 
 void DelayedDelete::call()
 {
-    if (isWayland() && DragController::instance()->isInQDrag()) {
+    if (isWayland() && DragController::instance(0)->isInQDrag()) {
         // Workaround QTBUG-115527. FloatingWindow must be deleted after QDrag::exec() ends.
         Platform::instance()->runDelayed(200, new DelayedDelete(m_object));
         return;

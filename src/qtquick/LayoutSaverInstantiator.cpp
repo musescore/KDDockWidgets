@@ -19,27 +19,46 @@ LayoutSaverInstantiator::LayoutSaverInstantiator(QObject *parent)
 {
 }
 
-LayoutSaverInstantiator::~LayoutSaverInstantiator()
+LayoutSaverInstantiator::~LayoutSaverInstantiator() = default;
+
+int LayoutSaverInstantiator::ctx() const
 {
+    return m_ctx;
+}
+
+void LayoutSaverInstantiator::setCtx(int ctx)
+{
+    if (m_ctx == ctx)
+        return;
+    m_ctx = ctx;
+    m_saver.reset();
+    Q_EMIT ctxChanged();
+}
+
+LayoutSaver *LayoutSaverInstantiator::saver()
+{
+    if (!m_saver)
+        m_saver = std::make_unique<LayoutSaver>(m_ctx);
+    return m_saver.get();
 }
 
 bool LayoutSaverInstantiator::saveToFile(const QString &jsonFilename)
 {
-    return LayoutSaver::saveToFile(jsonFilename);
+    return saver()->saveToFile(jsonFilename);
 }
 
 bool LayoutSaverInstantiator::restoreFromFile(const QString &jsonFilename)
 {
-    return LayoutSaver::restoreFromFile(jsonFilename);
+    return saver()->restoreFromFile(jsonFilename);
 }
 
 QVector<QString> LayoutSaverInstantiator::affinities() const
 {
-    return dptr()->m_affinityNames;
+    return m_saver ? m_saver->dptr()->m_affinityNames : QVector<QString>();
 }
 
 void LayoutSaverInstantiator::setAffinities(const QVector<QString> &affinities)
 {
-    setAffinityNames(affinities);
+    saver()->setAffinityNames(affinities);
     Q_EMIT affinitiesChanged();
 }

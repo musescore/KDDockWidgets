@@ -57,7 +57,7 @@ void TestDocks::tst_28NestedWidgets()
         layout->checkSanity();
 
         // Run the saver in these complex scenarios:
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         const QByteArray saved = saver.serializeLayout();
         QVERIFY(!saved.isEmpty());
         QVERIFY(saver.restoreLayout(saved));

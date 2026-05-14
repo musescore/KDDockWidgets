@@ -33,7 +33,7 @@ class DOCKS_EXPORT MDILayout : public Layout
 {
     Q_OBJECT
 public:
-    explicit MDILayout(View *parent = nullptr);
+    explicit MDILayout(int ctx, View *parent = nullptr);
     ~MDILayout() override;
 
     /// @brief docks the dock widgets into this MDI area, at the specified position

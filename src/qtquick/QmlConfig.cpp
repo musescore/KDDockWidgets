@@ -16,46 +16,36 @@
 #include "kddockwidgets/core/DockWidget.h"
 
 #include <QDebug>
-#include <QPointer>
+#include <QQmlEngine>
 #include <private/qglobal_p.h>
 
 using namespace KDDockWidgets;
 
-QPointer<QmlConfig> QmlConfig::s_qmlConfigInstance;
-
-static KDDockWidgets::Core::DockWidget *dockWidgetFactoryCallback(const QString &name)
-{
-    if (!QmlConfig::instance() || !QmlConfig::instance()->dockWidgetFactoryFunc().isCallable())
-        return nullptr;
-
-    QJSValue result = QmlConfig::instance()->dockWidgetFactoryFunc().call(QJSValueList() << name);
-    if (result.isError() || result.isNull() || result.isUndefined())
-        return nullptr;
-
-    auto dwInstantiator = qobject_cast<KDDockWidgets::DockWidgetInstantiator *>(result.toQObject());
-    if (!dwInstantiator)
-        qWarning() << "QmlConfig: Factory function did not return a valid DockWidgetInstantiator for" << name;
-
-    auto dw = dwInstantiator->controller();
-    if (!dw)
-        qWarning() << "QmlConfig: Factory function did not return a valid DockWidget for" << name;
-
-    return dw;
+namespace {
+// Stored as a dynamic property on the engine so ctx lives per-engine
+// rather than as a process-wide singleton.
+constexpr const char *kKddwCtxProperty = "_kddw_ctx";
 }
 
-QmlConfig::QmlConfig()
+int KDDockWidgets::ctxForEngine(QQmlEngine *engine)
 {
-    if (s_qmlConfigInstance) {
-        // Shouldn't happen since singleton
-        qFatal("QmlConfig: Another instance already exists. Only one supported");
-    } else {
-        s_qmlConfigInstance = this;
-    }
+    if (!engine)
+        return 0;
+    return engine->property(kKddwCtxProperty).toInt();
 }
+
+void KDDockWidgets::setCtxForEngine(QQmlEngine *engine, int ctx)
+{
+    if (!engine)
+        return;
+    engine->setProperty(kKddwCtxProperty, ctx);
+}
+
+QmlConfig::QmlConfig() = default;
 
 QmlConfig::~QmlConfig()
 {
-    s_qmlConfigInstance = nullptr;
+    Config::self(m_ctx).setDockWidgetFactoryFunc(nullptr);
 }
 
 QJSValue QmlConfig::dockWidgetFactoryFunc() const
@@ -71,10 +61,45 @@ void QmlConfig::setDockWidgetFactoryFunc(const QJSValue &func)
     m_dockWidgetFactoryFunc = func;
 
     if (m_dockWidgetFactoryFunc.isCallable()) {
-        Config::self().setDockWidgetFactoryFunc(&dockWidgetFactoryCallback);
+        QJSValue jsFunc = m_dockWidgetFactoryFunc;
+        Config::self(m_ctx).setDockWidgetFactoryFunc(
+            [jsFunc](const QString &name) mutable -> KDDockWidgets::Core::DockWidget * {
+                if (!jsFunc.isCallable())
+                    return nullptr;
+
+                QJSValue result = jsFunc.call(QJSValueList() << name);
+                if (result.isError() || result.isNull() || result.isUndefined())
+                    return nullptr;
+
+                auto dwInstantiator = qobject_cast<KDDockWidgets::DockWidgetInstantiator *>(result.toQObject());
+                if (!dwInstantiator) {
+                    qWarning() << "QmlConfig: Factory function did not return a valid DockWidgetInstantiator for" << name;
+                    return nullptr;
+                }
+
+                auto dw = dwInstantiator->controller();
+                if (!dw)
+                    qWarning() << "QmlConfig: Factory function did not return a valid DockWidget for" << name;
+
+                return dw;
+            });
     } else {
-        Config::self().setDockWidgetFactoryFunc(nullptr);
+        Config::self(m_ctx).setDockWidgetFactoryFunc(nullptr);
     }
 
     Q_EMIT dockWidgetFactoryFuncChanged();
+}
+
+int QmlConfig::ctx() const
+{
+    return m_ctx;
+}
+
+void QmlConfig::setCtx(int ctx)
+{
+    if (m_ctx == ctx)
+        return;
+    m_ctx = ctx;
+    setCtxForEngine(qmlEngine(this), ctx);
+    Q_EMIT ctxChanged();
 }

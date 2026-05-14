@@ -20,8 +20,8 @@
 using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
-MDILayout::MDILayout(View *parent)
-    : Layout(ViewType::MDILayout, Config::self().viewFactory()->createMDILayout(this, parent))
+MDILayout::MDILayout(int ctx, View *parent)
+    : Layout(ctx, ViewType::MDILayout, Config::self(ctx).viewFactory()->createMDILayout(this, parent))
     , m_rootItem(new Core::ItemFreeContainer(asLayoutingHost()))
 {
     setRootItem(m_rootItem);
@@ -52,7 +52,7 @@ void MDILayout::addDockWidget(Core::DockWidget *dw, Point localPt,
     if (group) {
         newItem->setGuest(group->asLayoutingGuest());
     } else {
-        group = new Core::Group();
+        group = new Core::Group(m_ctx);
         group->addTab(dw, addingOption);
 
         newItem->setGuest(group->asLayoutingGuest());

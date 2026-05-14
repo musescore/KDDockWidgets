@@ -149,8 +149,9 @@ Core::MainWindow *Platform::createMainWindow(const QString &uniqueName,
                                              Core::View *parent,
                                              Qt::WindowFlags flags) const
 {
+    // TestHelpers is only used by KDDW's own tests; use ctx=0.
     auto view = new QtWidgets::MainWindow(
-        uniqueName, options,
+        0, uniqueName, options,
         parent ? static_cast<QtWidgets::View<QMainWindow> *>(parent) : nullptr, flags);
 
     if (opts.isVisible)

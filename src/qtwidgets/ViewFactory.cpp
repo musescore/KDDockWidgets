@@ -57,7 +57,7 @@ Core::View *ViewFactory::createDockWidget(const QString &uniqueName, DockWidgetO
                                           LayoutSaverOptions layoutSaverOptions,
                                           Qt::WindowFlags windowFlags) const
 {
-    return new QtWidgets::DockWidget(uniqueName, options, layoutSaverOptions, windowFlags);
+    return new QtWidgets::DockWidget(m_ctx, uniqueName, options, layoutSaverOptions, windowFlags);
 }
 
 

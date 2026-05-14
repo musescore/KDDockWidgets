@@ -53,7 +53,7 @@ static Draggable *bestDraggable(Draggable *draggable)
             // Defensive, doesn't happen
             return draggable;
         } else {
-            if (KDDockWidgets::usesNativeTitleBar())
+            if (KDDockWidgets::usesNativeTitleBar(fw->ctx()))
                 return fw;
             return fw->titleBar();
         }
@@ -71,7 +71,7 @@ WindowBeingDragged::WindowBeingDragged(FloatingWindow *fw, Draggable *draggable)
     init();
 
     // Dragged windows normally have transparency, unless we don't have drop indicators
-    updateTransparency(/*enable=*/!Config::self().dropIndicatorsInhibited());
+    updateTransparency(/*enable=*/!Config::self(ctx()).dropIndicatorsInhibited());
 }
 
 WindowBeingDragged::WindowBeingDragged(Draggable *draggable)
@@ -104,6 +104,15 @@ WindowBeingDragged::~WindowBeingDragged()
     updateTransparency(/*enable=*/false);
 }
 
+int WindowBeingDragged::ctx() const
+{
+    if (m_floatingWindow)
+        return m_floatingWindow->ctx();
+    if (m_draggable)
+        return m_draggable->ctx();
+    return 0;
+}
+
 void WindowBeingDragged::init()
 {
     assert(m_floatingWindow);
@@ -117,13 +126,13 @@ void WindowBeingDragged::updateTransparency(bool enable)
     if (!Core::Platform::hasInstance() || isWayland() || !m_floatingWindow)
         return;
 
-    double opacity = Config::self().draggedWindowOpacity();
+    double opacity = Config::self(ctx()).draggedWindowOpacity();
     const bool transparencySupported = !std::isnan(opacity) && !fuzzyCompare(1.0, opacity);
     if (transparencySupported) {
         // We're using transparency, set it or unset it:
         if (enable) {
-            if (Config::self().transparencyOnlyOverDropIndicator()) {
-                if (DragController::instance()->currentDropLocation() == DropLocation_None)
+            if (Config::self(ctx()).transparencyOnlyOverDropIndicator()) {
+                if (DragController::instance(ctx())->currentDropLocation() == DropLocation_None)
                     opacity = 1;
             }
         } else {
@@ -142,9 +151,9 @@ void WindowBeingDragged::grabMouse(bool grab)
     KDDW_DEBUG("WindowBeingDragged: fw={}, grab={}, draggableView={} ", ( void * )m_floatingWindow, grab, ( void * )m_draggableView);
 
     if (grab)
-        DragController::instance()->grabMouseFor(m_draggableView);
+        DragController::instance(ctx())->grabMouseFor(m_draggableView);
     else
-        DragController::instance()->releaseMouse(m_draggableView);
+        DragController::instance(ctx())->releaseMouse(m_draggableView);
 }
 
 Vector<QString> WindowBeingDragged::affinities() const

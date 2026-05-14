@@ -14,6 +14,7 @@
 #include "Utils_p.h"
 #include "WidgetResizeHandler_p.h"
 #include "Config.h"
+#include "ContextData.h"
 #include "WindowZOrder_x11_p.h"
 
 #include "core/DockRegistry.h"
@@ -241,7 +242,7 @@ bool StatePreDrag::handleMouseMove(Point globalPos)
     if (!q->m_draggable->dragCanStart(q->m_pressPos, globalPos))
         return false;
 
-    if (auto func = Config::self().dragAboutToStartFunc()) {
+    if (auto func = Config::self(q->ctx()).dragAboutToStartFunc()) {
         if (!func(q->m_draggable))
             return false;
     }
@@ -314,7 +315,7 @@ void StateDragging::onEntry()
     q->m_windowBeingDragged = q->m_draggable->makeWindow();
     if (q->m_windowBeingDragged) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0) && defined(KDDW_FRONTEND_QT_WINDOWS)
-        if (!q->m_nonClientDrag && KDDockWidgets::usesNativeDraggingAndResizing()) {
+        if (!q->m_nonClientDrag && KDDockWidgets::usesNativeDraggingAndResizing(m_ctx)) {
             // Started as a client move, as the dock widget was docked,
             // but now that we're dragging it as a floating window, switch to native drag, so we can
             // still get aero-snap
@@ -398,7 +399,7 @@ void StateDragging::onExit()
     m_maybeCancelDrag.stop();
 #endif
 
-    if (auto callback = Config::self().dragEndedFunc()) {
+    if (auto callback = Config::self(q->ctx()).dragEndedFunc()) {
         // this user is interested in knowing the drag ended
         callback();
     }
@@ -575,7 +576,7 @@ bool StateInternalMDIDragging::handleMouseMove(Point globalPos)
 
     // Check if we need to pop out the MDI window (make it float)
     // If we drag the window against an edge, and move behind the edge some threshold, we float it
-    const int threshold = Config::self().mdiPopupThreshold();
+    const int threshold = Config::self(q->ctx()).mdiPopupThreshold();
     if (threshold != -1) {
         const Point overflow = newLocalPosBounded - newLocalPos;
         if (std::abs(overflow.x()) > threshold || std::abs(overflow.y()) > threshold)
@@ -629,10 +630,15 @@ DragController::DragController(Core::Object *parent)
     setCurrentState(m_stateNone);
 }
 
-DragController *DragController::instance()
+DragController *DragController::instance(int ctx)
 {
-    static DragController dragController;
-    return &dragController;
+    return ContextData::context(ctx)->dctrl;
+}
+
+DragController::DragController(int ctx, Core::Object *parent)
+    : DragController(parent)
+{
+    const_cast<int &>(m_ctx) = ctx;
 }
 
 void DragController::registerDraggable(Draggable *drg)
@@ -779,7 +785,7 @@ bool DragController::onMouseEvent(View *w, MouseEvent *me)
     switch (me->type()) {
     case Event::NonClientAreaMouseButtonPress: {
         if (auto fw = w->asFloatingWindowController()) {
-            if (KDDockWidgets::usesNativeTitleBar()
+            if (KDDockWidgets::usesNativeTitleBar(m_ctx)
                 || fw->isInDragArea(Qt5Qt6Compat::eventGlobalPos(me))) {
                 m_nonClientDrag = true;
                 return activeState()->handleMouseButtonPress(
@@ -796,7 +802,7 @@ bool DragController::onMouseEvent(View *w, MouseEvent *me)
         // For top-level windows that support native dragging all goes through the NonClient*
         // events. This also forbids dragging a FloatingWindow simply by pressing outside of the
         // title area, in the background
-        if (KDDockWidgets::usesNativeDraggingAndResizing() && w->isRootView())
+        if (KDDockWidgets::usesNativeDraggingAndResizing(m_ctx) && w->isRootView())
             break;
 
         assert(activeState());
@@ -871,7 +877,7 @@ bool DragController::programmaticStartDrag(Draggable *draggable, Point globalPos
         return false;
     }
 
-    if (auto func = Config::self().dragAboutToStartFunc()) {
+    if (auto func = Config::self(m_ctx).dragAboutToStartFunc()) {
         if (!func(m_draggable))
             return false;
     }
@@ -1034,11 +1040,11 @@ std::shared_ptr<View> DragController::qtTopLevelUnderCursor() const
         FloatingWindow *floatingWindow = m_windowBeingDragged->floatingWindow();
         if (floatingWindow) {
             if (auto tl = qtTopLevelUnderCursor_impl(
-                    globalPos, DockRegistry::self()->floatingQWindows(), floatingWindow->view()))
+                    globalPos, DockRegistry::self(m_ctx)->floatingQWindows(), floatingWindow->view()))
                 return tl;
 
             return qtTopLevelUnderCursor_impl(
-                globalPos, DockRegistry::self()->topLevels(/*excludeFloatingDocks=*/true), floatingWindow->view());
+                globalPos, DockRegistry::self(m_ctx)->topLevels(/*excludeFloatingDocks=*/true), floatingWindow->view());
         }
     }
 
@@ -1046,7 +1052,7 @@ std::shared_ptr<View> DragController::qtTopLevelUnderCursor() const
     return nullptr;
 }
 
-static DropArea *deepestDropAreaInTopLevel(std::shared_ptr<View> topLevel, Point globalPos,
+static DropArea *deepestDropAreaInTopLevel(int ctx, std::shared_ptr<View> topLevel, Point globalPos,
                                            const Vector<QString> &affinities)
 {
     const auto localPos = topLevel->mapFromGlobal(globalPos);
@@ -1054,7 +1060,7 @@ static DropArea *deepestDropAreaInTopLevel(std::shared_ptr<View> topLevel, Point
 
     while (view) {
         if (auto dt = view->asDropAreaController()) {
-            if (DockRegistry::self()->affinitiesMatch(dt->affinities(), affinities))
+            if (DockRegistry::self(ctx)->affinitiesMatch(dt->affinities(), affinities))
                 return dt;
         }
         view = view->parentView();
@@ -1077,7 +1083,7 @@ DropArea *DragController::dropAreaUnderCursor() const
     const Vector<QString> affinities = m_windowBeingDragged->floatingWindow()->affinities();
 
     if (auto fw = topLevel->asFloatingWindowController()) {
-        if (DockRegistry::self()->affinitiesMatch(fw->affinities(), affinities)) {
+        if (DockRegistry::self(m_ctx)->affinitiesMatch(fw->affinities(), affinities)) {
             KDDW_DEBUG("DragController::dropAreaUnderCursor: Found drop area in floating window");
             return fw->dropArea();
         }
@@ -1088,7 +1094,7 @@ DropArea *DragController::dropAreaUnderCursor() const
         assert(false);
     }
 
-    if (auto dt = deepestDropAreaInTopLevel(topLevel, Platform::instance()->cursorPos(), affinities)) {
+    if (auto dt = deepestDropAreaInTopLevel(m_ctx, topLevel, Platform::instance()->cursorPos(), affinities)) {
         KDDW_DEBUG("DragController::dropAreaUnderCursor: Found drop area {} {}", ( void * )dt, ( void * )dt->view()->rootView().get());
         return dt;
     }

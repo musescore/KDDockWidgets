@@ -13,6 +13,7 @@
 #include "core/DockRegistry_p.h"
 #include "core/DragController_p.h"
 #include "core/Group.h"
+#include "Platform.h"
 #include "qtcommon/View.h"
 
 #include <QQuickItem>
@@ -22,12 +23,12 @@ using namespace KDDockWidgets;
 
 QtQuickHelpers::QtQuickHelpers()
 {
-    KDBindings::ScopedConnection conn = DockRegistry::self()->dptr()->groupInMDIResizeChanged.connect([this] {
+    KDBindings::ScopedConnection conn = DockRegistry::self(plat()->ctx())->dptr()->groupInMDIResizeChanged.connect([this] {
         Q_EMIT groupInMDIResizeChanged();
     });
     m_connections.push_back(std::move(conn));
 
-    KDBindings::ScopedConnection conn2 = Core::DragController::instance()->isDraggingChanged.connect([this] {
+    KDBindings::ScopedConnection conn2 = Core::DragController::instance(plat()->ctx())->isDraggingChanged.connect([this] {
         Q_EMIT isDraggingChanged();
     });
     m_connections.push_back(std::move(conn2));
@@ -41,7 +42,7 @@ qreal QtQuickHelpers::logicalDpiFactor(const QQuickItem *) const
 
 QObject *QtQuickHelpers::groupViewInMDIResize() const
 {
-    if (auto group = DockRegistry::self()->groupInMDIResize())
+    if (auto group = DockRegistry::self(plat()->ctx())->groupInMDIResize())
         return QtCommon::View_qt::asQObject(group->view());
 
     return nullptr;
@@ -49,7 +50,7 @@ QObject *QtQuickHelpers::groupViewInMDIResize() const
 
 bool QtQuickHelpers::isDragging() const
 {
-    return Core::DragController::instance()->isDragging();
+    return Core::DragController::instance(plat()->ctx())->isDragging();
 }
 
 QString QtQuickHelpers::generateUuid() const

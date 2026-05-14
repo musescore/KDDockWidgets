@@ -44,11 +44,13 @@ class DOCKS_EXPORT Group : public Controller, public FocusScope
 public:
     typedef Vector<Group *> List;
 
-    explicit Group(View *parent = nullptr, FrameOptions = FrameOption_None,
+    explicit Group(int ctx, View *parent = nullptr, FrameOptions = FrameOption_None,
                    int userType = 0);
     ~Group() override;
 
-    static Group *deserialize(const LayoutSaver::Group &);
+    int ctx() const { return m_ctx; }
+
+    static Group *deserialize(int ctx, const LayoutSaver::Group &);
     LayoutSaver::Group serialize() const;
 
     ///@brief Adds a widget into the Group's Stack
@@ -358,6 +360,7 @@ private:
     WidgetResizeHandler *m_resizeHandler = nullptr;
     bool m_updatingTitleBar = false;
     bool m_beingDeleted = false;
+    const int m_ctx = 0;
 };
 
 }

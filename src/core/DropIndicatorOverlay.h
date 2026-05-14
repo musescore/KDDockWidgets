@@ -49,6 +49,9 @@ public:
 
     ~DropIndicatorOverlay() override;
 
+    /// Returns the context of the owning DropArea (the Layout this overlay belongs to).
+    int ctx() const;
+
     void setHoveredGroup(Group *);
     void setWindowBeingDragged(bool);
     Rect hoveredGroupRect() const;

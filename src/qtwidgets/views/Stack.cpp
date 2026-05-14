@@ -54,7 +54,7 @@ Stack::Stack(Core::Stack *controller, QWidget *parent)
     , StackViewInterface(controller)
     , d(new Private())
 {
-    setTabPosition(Config::self().tabsAtBottom() ? TabPosition::South : TabPosition::North);
+    setTabPosition(Config::self(m_stack->ctx()).tabsAtBottom() ? TabPosition::South : TabPosition::North);
 }
 
 Stack::~Stack()
@@ -65,7 +65,7 @@ Stack::~Stack()
 void Stack::init()
 {
     setTabBar(tabBar());
-    setTabsClosable(Config::self().flags() & Config::Flag_TabsHaveCloseButton);
+    setTabsClosable(Config::self(m_stack->ctx()).flags() & Config::Flag_TabsHaveCloseButton);
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, &QTabWidget::customContextMenuRequested, this, &Stack::showContextMenu);
@@ -113,7 +113,7 @@ void Stack::mousePressEvent(QMouseEvent *ev)
 {
     QTabWidget::mousePressEvent(ev);
 
-    if ((Config::self().flags() & Config::Flag_TitleBarIsFocusable)
+    if ((Config::self(m_stack->ctx()).flags() & Config::Flag_TitleBarIsFocusable)
         && !m_stack->group()->isFocused()) {
         // User clicked on the tab widget itself
         m_stack->group()->FocusScope::focus(Qt::MouseFocusReason);
@@ -122,10 +122,10 @@ void Stack::mousePressEvent(QMouseEvent *ev)
 
 void Stack::setupTabBarButtons()
 {
-    if (!(Config::self().flags() & Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden))
+    if (!(Config::self(m_stack->ctx()).flags() & Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden))
         return;
 
-    auto factory = static_cast<ViewFactory *>(Config::self().viewFactory());
+    auto factory = static_cast<ViewFactory *>(Config::self(m_stack->ctx()).viewFactory());
     d->closeButton = factory->createTitleBarButton(this, TitleBarButtonType::Close);
     d->floatButton = factory->createTitleBarButton(this, TitleBarButtonType::Float);
 
@@ -150,7 +150,7 @@ void Stack::setupTabBarButtons()
     });
 
     updateMargins();
-    d->screenChangedConnection = DockRegistry::self()->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
+    d->screenChangedConnection = DockRegistry::self(m_stack->ctx())->dptr()->windowChangedScreen.connect([this](Core::Window::Ptr w) {
         if (View::d->isInWindow(w))
             updateMargins();
     });
@@ -184,7 +184,7 @@ void Stack::updateMargins()
 
 void Stack::showContextMenu(QPoint pos)
 {
-    if (!(Config::self().flags() & Config::Flag_AllowSwitchingTabsViaMenu))
+    if (!(Config::self(m_stack->ctx()).flags() & Config::Flag_AllowSwitchingTabsViaMenu))
         return;
 
     QTabBar *tabBar = QTabWidget::tabBar();

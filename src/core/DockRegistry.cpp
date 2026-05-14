@@ -13,6 +13,7 @@
 #include "DockRegistry_p.h"
 #include "DelayedCall_p.h"
 #include "Config.h"
+#include "ContextData.h"
 #include "core/Logging_p.h"
 #include "core/Position_p.h"
 #include "core/Utils_p.h"
@@ -69,6 +70,13 @@ DockRegistry::DockRegistry(Core::Object *parent)
         &DockRegistry::onFocusedViewChanged, this);
 }
 
+DockRegistry::DockRegistry(int ctx, Core::Object *parent)
+    : DockRegistry(parent)
+{
+    const_cast<int &>(m_ctx) = ctx;
+    m_isContextDataOwned = true;
+}
+
 DockRegistry::~DockRegistry()
 {
     delete m_sideBarGroupings;
@@ -79,6 +87,10 @@ DockRegistry::~DockRegistry()
 
 void DockRegistry::maybeDelete()
 {
+    // If we're owned by ContextData, ContextData will delete us
+    if (m_isContextDataOwned)
+        return;
+
     // We delete the singleton just to make LSAN happy.
     // We could also simply ask the user do call something like KDDockWidgets::deinit() in the future,
     // Also, please don't change this to be deleted at static dtor time with Q_GLOBAL_STATIC.
@@ -102,7 +114,7 @@ void DockRegistry::onFocusedViewChanged(std::shared_ptr<View> view)
         }
 
         if (auto dw = p->asDockWidgetController()) {
-            DockRegistry::self()->setFocusedDockWidget(dw);
+            DockRegistry::self(m_ctx)->setFocusedDockWidget(dw);
             return;
         }
         p = p->parentView();
@@ -309,9 +321,9 @@ DockRegistry *DockRegistry::self(bool create)
     return s_dockRegistry;
 }
 
-DockRegistry *DockRegistry::self()
+DockRegistry *DockRegistry::self(int ctx)
 {
-    return self(true);
+    return ContextData::context(ctx)->reg;
 }
 
 bool DockRegistry::isInitialized()
@@ -427,7 +439,7 @@ Core::DockWidget *DockRegistry::dockByName(const QString &name, DockByNameFlags 
 
     if (flags.testFlag(DockByNameFlag::CreateIfNotFound)) {
         // DockWidget doesn't exist, ask to create it
-        if (auto factoryFunc = Config::self().dockWidgetFactoryFunc()) {
+        if (auto factoryFunc = Config::self(m_ctx).dockWidgetFactoryFunc()) {
             auto dw = factoryFunc(name);
             if (dw && dw->uniqueName() != name) {
                 // Very special case
@@ -701,7 +713,7 @@ bool DockRegistry::onMouseButtonPress(View *view, MouseEvent *event)
     if (!view)
         return false;
 
-    if (!Config::hasMDIFlag(Config::MDIFlag_NoClickToRaise)) {
+    if (!Config::hasMDIFlag(m_ctx, Config::MDIFlag_NoClickToRaise)) {
         // When clicking on a MDI Group we raise the window
         if (Controller *c = view->d->firstParentOfType(ViewType::Group)) {
             auto group = static_cast<Group *>(c);
@@ -711,7 +723,7 @@ bool DockRegistry::onMouseButtonPress(View *view, MouseEvent *event)
     }
 
     // The following code is for hididng the overlay
-    if (!(Config::self().flags() & Config::Flag_TitleBarShowAutoHide))
+    if (!(Config::self(m_ctx).flags() & Config::Flag_TitleBarShowAutoHide))
         return false;
 
     if (view->is(ViewType::Group)) {
@@ -842,10 +854,10 @@ DockWidget::List &SideBarGroupings::groupingByRef(DockWidget *dw)
 
 CloseReasonSetter::CloseReasonSetter(CloseReason reason)
 {
-    DockRegistry::self()->setCurrentCloseReason(reason);
+    DockRegistry::self(0)->setCurrentCloseReason(reason);
 }
 
 CloseReasonSetter::~CloseReasonSetter()
 {
-    DockRegistry::self()->setCurrentCloseReason(CloseReason::Unspecified);
+    DockRegistry::self(0)->setCurrentCloseReason(CloseReason::Unspecified);
 }

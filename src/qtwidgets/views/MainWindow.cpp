@@ -65,7 +65,7 @@ public:
     explicit Private(MainWindow *qq)
         : q(qq)
         , m_controller(qq->mainWindow())
-        , m_supportsAutoHide(Config::self().flags() & Config::Flag_TitleBarShowAutoHide)
+        , m_supportsAutoHide(Config::self(qq->mainWindow()->ctx()).flags() & Config::Flag_TitleBarShowAutoHide)
         , m_centralWidget(new MyCentralWidget(qq))
         , m_layout(new QHBoxLayout(m_centralWidget)) // 1 level of indirection so we can add some
                                                      // margins
@@ -139,9 +139,9 @@ public:
 
 MyCentralWidget::~MyCentralWidget() = default;
 
-MainWindow::MainWindow(const QString &uniqueName, MainWindowOptions options,
+MainWindow::MainWindow(int ctx, const QString &uniqueName, MainWindowOptions options,
                        QWidget *parent, Qt::WindowFlags flags)
-    : View<QMainWindow>(new Core::MainWindow(this, uniqueName, options),
+    : View<QMainWindow>(new Core::MainWindow(ctx, this, uniqueName, options),
                         Core::ViewType::MainWindow, parent, flags)
     , MainWindowViewInterface(static_cast<Core::MainWindow *>(controller()))
     , d(new Private(this))
@@ -172,9 +172,11 @@ MainWindow::MainWindow(const QString &uniqueName, MainWindowOptions options,
 
         create(); // ensure QWindow exists
         window()->onScreenChanged(this, [](QObject *context, auto window) {
-            if (auto mw = qobject_cast<MainWindow *>(context))
+            auto mw = qobject_cast<MainWindow *>(context);
+            if (mw)
                 mw->updateMargins(); // logical dpi might have changed
-            DockRegistry::self()->dptr()->windowChangedScreen.emit(window);
+            const int ctx = mw ? mw->mainWindow()->ctx() : 0;
+            DockRegistry::self(ctx)->dptr()->windowChangedScreen.emit(window);
         });
     }
 

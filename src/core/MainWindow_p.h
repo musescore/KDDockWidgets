@@ -32,7 +32,7 @@ public:
     explicit Private(MainWindow *mainWindow, const QString &, MainWindowOptions options)
         : m_options(options)
         , q(mainWindow)
-        , m_supportsAutoHide(Config::self().flags() & Config::Flag_AutoHideSupport)
+        , m_supportsAutoHide(Config::self(mainWindow->ctx()).flags() & Config::Flag_AutoHideSupport)
     {
     }
 
@@ -41,7 +41,7 @@ public:
         if (m_supportsAutoHide) {
             for (auto location : { SideBarLocation::North, SideBarLocation::East,
                                    SideBarLocation::West, SideBarLocation::South }) {
-                m_sideBars[location] = new Core::SideBar(location, q);
+                m_sideBars[location] = new Core::SideBar(q->ctx(), location, q);
             }
         }
     }
@@ -66,7 +66,7 @@ public:
         if (!supportsPersistentCentralWidget())
             return nullptr;
 
-        auto dockView = Config::self().viewFactory()->createDockWidget(
+        auto dockView = Config::self(q->ctx()).viewFactory()->createDockWidget(
             uniqueName + QStringLiteral("-persistentCentralDockWidget"));
         auto dw = dockView->asDockWidgetController();
         dw->dptr()->m_isPersistentCentralDockWidget = true;

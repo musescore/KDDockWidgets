@@ -135,7 +135,7 @@ void MainWindowViewInterface::layoutParentContainerEqually(DockWidgetViewInterfa
 
 void MainWindowViewInterface::moveToSideBar(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->moveToSideBar(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -145,7 +145,7 @@ void MainWindowViewInterface::moveToSideBar(const QString &dockId)
 void MainWindowViewInterface::moveToSideBar(const QString &dockId,
                                             KDDockWidgets::SideBarLocation loc)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->moveToSideBar(dw, loc);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -154,7 +154,7 @@ void MainWindowViewInterface::moveToSideBar(const QString &dockId,
 
 void MainWindowViewInterface::restoreFromSideBar(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->restoreFromSideBar(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -163,7 +163,7 @@ void MainWindowViewInterface::restoreFromSideBar(const QString &dockId)
 
 void MainWindowViewInterface::overlayOnSideBar(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->overlayOnSideBar(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -172,7 +172,7 @@ void MainWindowViewInterface::overlayOnSideBar(const QString &dockId)
 
 void MainWindowViewInterface::toggleOverlayOnSideBar(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->toggleOverlayOnSideBar(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -181,7 +181,7 @@ void MainWindowViewInterface::toggleOverlayOnSideBar(const QString &dockId)
 
 void MainWindowViewInterface::layoutParentContainerEqually(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->layoutParentContainerEqually(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -190,7 +190,7 @@ void MainWindowViewInterface::layoutParentContainerEqually(const QString &dockId
 
 void MainWindowViewInterface::addDockWidgetAsTab(const QString &dockId)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         m_mainWindow->addDockWidgetAsTab(dw);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);
@@ -201,10 +201,10 @@ void MainWindowViewInterface::addDockWidget(const QString &dockId, KDDockWidgets
                                             const QString &relativeToDockId,
                                             const KDDockWidgets::InitialOption &initialOption)
 {
-    if (Core::DockWidget *dw = DockRegistry::self()->dockByName(dockId)) {
+    if (Core::DockWidget *dw = DockRegistry::self(mainWindow()->ctx())->dockByName(dockId)) {
         auto relativeTo = relativeToDockId.isEmpty()
             ? nullptr
-            : DockRegistry::self()->dockByName(relativeToDockId);
+            : DockRegistry::self(mainWindow()->ctx())->dockByName(relativeToDockId);
         m_mainWindow->addDockWidget(dw, location, relativeTo, initialOption);
     } else {
         KDDW_ERROR("Could not find dock widget {}", dockId);

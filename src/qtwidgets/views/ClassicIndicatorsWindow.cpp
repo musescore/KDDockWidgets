@@ -42,7 +42,7 @@ namespace KDDockWidgets {
 static bool windowManagerHasTranslucency()
 {
     if (qEnvironmentVariableIsSet("KDDW_NO_TRANSLUCENCY")
-        || (Config::self().internalFlags() & Config::InternalFlag_DisableTranslucency))
+        || (Config::self(0).internalFlags() & Config::InternalFlag_DisableTranslucency))
         return false;
 
 #if defined(QT_X11EXTRAS_LIB) || (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) && defined(Q_OS_LINUX))
@@ -142,7 +142,7 @@ QString Indicator::iconName(bool active) const
 QString Indicator::iconFileName(bool active) const
 {
     const QString name = iconName(active);
-    const QString path = Config::self().viewFactory()->classicIndicatorsPath();
+    const QString path = Config::self(static_cast<IndicatorWindow *>(parent())->ctx()).viewFactory()->classicIndicatorsPath();
 
     return KDDockWidgets::windowManagerHasTranslucency()
         ? QStringLiteral("%1/%2.png").arg(path, name)
@@ -161,6 +161,11 @@ static Qt::WindowFlags flagsForIndicatorWindow()
     return isWayland() ? Qt::Widget : (Qt::Tool | Qt::BypassWindowManagerHint);
 }
 
+int IndicatorWindow::ctx() const
+{
+    return classicIndicators->ctx();
+}
+
 IndicatorWindow::IndicatorWindow(ClassicDropIndicatorOverlay *classicIndicators_)
     : QWidget(parentForIndicatorWindow(classicIndicators_), flagsForIndicatorWindow())
     , classicIndicators(classicIndicators_)
@@ -177,7 +182,7 @@ IndicatorWindow::IndicatorWindow(ClassicDropIndicatorOverlay *classicIndicators_
 {
     setWindowFlag(Qt::FramelessWindowHint, true);
 
-    if (Config::self().flags() & Config::Flag_KeepAboveIfNotUtilityWindow) {
+    if (Config::self(classicIndicators_->ctx()).flags() & Config::Flag_KeepAboveIfNotUtilityWindow) {
         // Ensure the overlay window is on top
         setWindowFlag(Qt::WindowStaysOnTopHint, true);
     }

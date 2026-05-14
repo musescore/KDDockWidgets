@@ -112,8 +112,10 @@ public:
      * sidebar overlay)
      * @param target The target widget that will be resized. Also acts as parent Object.
      */
-    explicit WidgetResizeHandler(EventFilterMode, WindowMode, Core::View *target);
+    explicit WidgetResizeHandler(int ctx, EventFilterMode, WindowMode, Core::View *target);
     ~WidgetResizeHandler() override;
+
+    int ctx() const { return m_ctx; }
 
     /**
      * @brief Sets the sides the user is allowed to resize with mouse.
@@ -189,6 +191,7 @@ private:
     const bool m_isTopLevelWindowResizer;
     int m_resizeGap = 10;
     CursorPositions mAllowedResizeSides = CursorPosition_All;
+    const int m_ctx = 0;
     bool m_overrideCursorSet = false;
     bool m_handlesMouseCursor = true;
 

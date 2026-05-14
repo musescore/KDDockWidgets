@@ -35,6 +35,7 @@ public:
     explicit Separator(LayoutingHost *host, Qt::Orientation orientation, Core::ItemBoxContainer *parentContainer);
     ~Separator() override;
 
+    int ctx() const { return m_ctx; }
     bool isVertical() const;
     int position() const;
     void setGeometry(Rect r);
@@ -62,6 +63,7 @@ private:
     void setLazyPosition(int);
     bool usesLazyResize() const;
 
+    const int m_ctx;
     struct Private;
     Private *const d;
 };

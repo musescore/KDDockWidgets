@@ -203,7 +203,7 @@ void TestDocks::tst_invalidJSON()
 
         SetExpectedWarning sew(expectedWarning);
 
-        LayoutSaver restorer;
+        LayoutSaver restorer(0);
         QCOMPARE(restorer.restoreFromFile(absoluteLayoutFileName), expectedResult);
     };
 

@@ -54,7 +54,8 @@ class DOCKS_EXPORT ViewFactory : public Core::ViewFactory
     QML_ELEMENT
     QML_UNCREATABLE("Created by the framework only.")
 public:
-    ViewFactory() = default;
+    explicit ViewFactory(int ctx = 0)
+        : Core::ViewFactory(ctx) {}
     ~ViewFactory() override;
     Core::View *createDockWidget(const QString &uniqueName, DockWidgetOptions options = {},
                                  LayoutSaverOptions layoutSaverOptions = {},
@@ -94,7 +95,7 @@ public:
     Core::View *createSegmentedDropIndicatorOverlayView(Core::SegmentedDropIndicatorOverlay *controller,
                                                         Core::View *parent) const override;
 
-    static ViewFactory *self();
+    static ViewFactory *self(int ctx);
 
 private:
     Q_DISABLE_COPY(ViewFactory)

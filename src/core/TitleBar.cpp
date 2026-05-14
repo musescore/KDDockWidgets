@@ -39,15 +39,15 @@ using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
 
-TitleBar::TitleBar(Group *parent)
+TitleBar::TitleBar(int ctx, Group *parent)
     : Controller(
           ViewType::TitleBar,
-          Config::self().viewFactory()->createTitleBar(this, parent ? parent->view() : nullptr))
-    , Draggable(view())
+          Config::self(ctx).viewFactory()->createTitleBar(this, parent ? parent->view() : nullptr))
+    , Draggable(ctx, view())
     , d(new Private())
     , m_group(parent)
     , m_floatingWindow(nullptr)
-    , m_supportsAutoHide((Config::self().flags() & Config::Flag_TitleBarShowAutoHide) == Config::Flag_TitleBarShowAutoHide)
+    , m_supportsAutoHide((Config::self(ctx).flags() & Config::Flag_TitleBarShowAutoHide) == Config::Flag_TitleBarShowAutoHide)
     , m_isStandalone(false)
 {
     init();
@@ -65,15 +65,15 @@ TitleBar::TitleBar(Group *parent)
     });
 }
 
-TitleBar::TitleBar(FloatingWindow *parent)
+TitleBar::TitleBar(int ctx, FloatingWindow *parent)
     : Controller(
           ViewType::TitleBar,
-          Config::self().viewFactory()->createTitleBar(this, parent ? parent->view() : nullptr))
-    , Draggable(view())
+          Config::self(ctx).viewFactory()->createTitleBar(this, parent ? parent->view() : nullptr))
+    , Draggable(ctx, view())
     , d(new Private())
     , m_group(nullptr)
     , m_floatingWindow(parent)
-    , m_supportsAutoHide((Config::self().flags() & Config::Flag_TitleBarShowAutoHide) == Config::Flag_TitleBarShowAutoHide)
+    , m_supportsAutoHide((Config::self(ctx).flags() & Config::Flag_TitleBarShowAutoHide) == Config::Flag_TitleBarShowAutoHide)
     , m_isStandalone(false)
 {
     init();
@@ -84,9 +84,9 @@ TitleBar::TitleBar(FloatingWindow *parent)
     fwPrivate->activatedChanged.connect([this] { d->isFocusedChanged.emit(); });
 }
 
-TitleBar::TitleBar(Core::View *view)
+TitleBar::TitleBar(int ctx, Core::View *view)
     : Controller(ViewType::TitleBar, view)
-    , Draggable(view, /*enabled=*/false)
+    , Draggable(ctx, view, /*enabled=*/false)
     , d(new Private())
     , m_group(nullptr)
     , m_floatingWindow(nullptr)
@@ -120,7 +120,7 @@ TitleBar::~TitleBar()
 
 bool TitleBar::titleBarIsFocusable() const
 {
-    return Config::self().flags() & Config::Flag_TitleBarIsFocusable;
+    return Config::self(m_ctx).flags() & Config::Flag_TitleBarIsFocusable;
 }
 
 
@@ -167,9 +167,9 @@ Icon TitleBar::icon() const
 
 bool TitleBar::onDoubleClicked()
 {
-    if (Config::self().flags() & Config::Flag_DisableDoubleClick) {
+    if (Config::self(m_ctx).flags() & Config::Flag_DisableDoubleClick) {
         return false;
-    } else if ((Config::self().flags() & Config::Flag_DoubleClickMaximizes) && m_floatingWindow) {
+    } else if ((Config::self(m_ctx).flags() & Config::Flag_DoubleClickMaximizes) && m_floatingWindow) {
         // Not using isFloating(), as that can be a dock widget nested in a floating window. By
         // convention it's floating, but it's not the title bar of the top-level window.
         toggleMaximized();
@@ -210,7 +210,7 @@ bool TitleBar::supportsFloatUnfloat() const
 
 bool TitleBar::supportsFloatingButton() const
 {
-    auto flags = Config::self().flags();
+    auto flags = Config::self(m_ctx).flags();
     if (flags & Config::Flag_TitleBarHasMaximizeButton) {
         // Apps having a maximize/restore button traditionally don't have a floating one,
         // QDockWidget style only has floating and no maximize/restore.
@@ -276,7 +276,7 @@ Core::FloatingWindow *TitleBar::floatingWindow() const
 
 void TitleBar::focus(Qt::FocusReason reason)
 {
-    if (!(Config::self().flags() & Config::Flag_TitleBarIsFocusable))
+    if (!(Config::self(m_ctx).flags() & Config::Flag_TitleBarIsFocusable))
         return;
 
     if (m_group) {
@@ -406,7 +406,7 @@ void TitleBar::onCloseClicked()
 {
     CloseReasonSetter reason(CloseReason::TitleBarCloseButton);
 
-    const bool closeOnlyCurrentTab = Config::self().flags() & Config::Flag_CloseOnlyCurrentTab;
+    const bool closeOnlyCurrentTab = Config::self(m_ctx).flags() & Config::Flag_CloseOnlyCurrentTab;
 
     if (m_group) {
         if (closeOnlyCurrentTab) {
@@ -540,9 +540,9 @@ void TitleBar::onAutoHideClicked()
         return;
     }
 
-    const bool groupedAutoHide = Config::hasFlag(Config::Flag_AutoHideAsTabGroups);
+    const bool groupedAutoHide = Config::hasFlag(m_ctx, Config::Flag_AutoHideAsTabGroups);
     const auto currentDw = m_group->currentDockWidget();
-    auto registry = DockRegistry::self();
+    auto registry = DockRegistry::self(m_ctx);
 
     if (isOverlayed()) { // Restore it:
         auto dw = dockwidgets.first();
@@ -582,7 +582,7 @@ std::unique_ptr<WindowBeingDragged> TitleBar::makeWindow()
         return {}; // not applicable
 
     if (!isVisible() && view()->rootView()->controller()->isVisible()
-        && !(Config::self().flags() & Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden)) {
+        && !(Config::self(m_ctx).flags() & Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden)) {
 
         // When using Flag_ShowButtonsOnTabBarIfTitleBarHidden we forward the call from the tab
         // bar's buttons to the title bar's buttons, just to reuse logic
@@ -614,7 +614,7 @@ std::unique_ptr<WindowBeingDragged> TitleBar::makeWindow()
     Rect r = m_group->view()->geometry();
     r.moveTopLeft(m_group->mapToGlobal(Point(0, 0)));
 
-    auto floatingWindow = new Core::FloatingWindow(m_group, {});
+    auto floatingWindow = new Core::FloatingWindow(m_ctx, m_group, {});
     floatingWindow->setSuggestedGeometry(r, SuggestedGeometryHint_GeometryIsFromDocked);
     floatingWindow->view()->show();
 

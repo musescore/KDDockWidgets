@@ -42,14 +42,14 @@ int main(int argc, char **argv)
         KDDockWidgets::initFrontend(KDDockWidgets::FrontendType::QtWidgets);
 
         // Create our main window. Dock 1 dock widget, let the other float and let a 3rd be hidden
-        KDDockWidgets::QtWidgets::MainWindow mainWindow(QStringLiteral("MyMainWindow"));
+        KDDockWidgets::QtWidgets::MainWindow mainWindow(0, QStringLiteral("MyMainWindow"));
         mainWindow.setWindowTitle("Main Window");
         mainWindow.resize(1200, 1200);
         mainWindow.show();
 
-        auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
-        auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock2"));
-        auto dock3 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock3"));
+        auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
+        auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock2"));
+        auto dock3 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock3"));
 
         mainWindow.addDockWidget(dock1, KDDockWidgets::Location_OnLeft);
         dock2->open();
