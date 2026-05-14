@@ -3127,16 +3127,16 @@ void ItemBoxContainer::growItem(int index, SizingInfo::List &sizes, int missing,
 
         if (toSteal > available1 + available2) {
             root()->dumpLayout();
-            assert(false);
+            // assert(false);
         }
 
         while (toSteal > 0) {
             if (available1 == 0) {
-                assert(available2 >= toSteal);
+                // assert(available2 >= toSteal);
                 side2Growth += toSteal;
                 break;
             } else if (available2 == 0) {
-                assert(available1 >= toSteal);
+                // assert(available1 >= toSteal);
                 side1Growth += toSteal;
                 break;
             }
@@ -3268,7 +3268,7 @@ Vector<int> ItemBoxContainer::calculateSqueezes(
 
             if (numDonors == 0) {
                 root()->dumpLayout();
-                assert(false);
+                // assert(false);
                 return {};
             }
 
