@@ -88,6 +88,8 @@ public:
 protected:
     explicit WindowBeingDragged(Draggable *);
     KDDW_DELETE_COPY_CTOR(WindowBeingDragged)
+    /// Returns the context bound to the floating window or draggable owning this object.
+    int ctx() const;
     ObjectGuard<FloatingWindow> m_floatingWindow;
     Draggable *const m_draggable;
     View *m_draggableView = nullptr;

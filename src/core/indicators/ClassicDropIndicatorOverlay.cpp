@@ -27,9 +27,9 @@ using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
 static Core::ClassicIndicatorWindowViewInterface *
-createIndicatorWindow(ClassicDropIndicatorOverlay *classicIndicators, Core::View *parent)
+createIndicatorWindow(int ctx, ClassicDropIndicatorOverlay *classicIndicators, Core::View *parent)
 {
-    auto window = Config::self().viewFactory()->createClassicIndicatorWindow(classicIndicators, parent);
+    auto window = Config::self(ctx).viewFactory()->createClassicIndicatorWindow(classicIndicators, parent);
     window->setObjectName(QStringLiteral("_docks_IndicatorWindow_Overlay"));
 
     return window;
@@ -37,9 +37,9 @@ createIndicatorWindow(ClassicDropIndicatorOverlay *classicIndicators, Core::View
 
 ClassicDropIndicatorOverlay::ClassicDropIndicatorOverlay(Core::DropArea *dropArea)
     : DropIndicatorOverlay(dropArea) // Is parented on the drop-area, not a toplevel.
-    , m_rubberBand(Config::self().viewFactory()->createRubberBand(
+    , m_rubberBand(Config::self(dropArea->ctx()).viewFactory()->createRubberBand(
           rubberBandIsTopLevel() ? nullptr : dropArea->view())) // rubber band is parented on the drop area
-    , m_indicatorWindow(createIndicatorWindow(this, dropArea->view())) // a real top-level, transparent window, to hold our indicators
+    , m_indicatorWindow(createIndicatorWindow(dropArea->ctx(), this, dropArea->view())) // a real top-level, transparent window, to hold our indicators
 {
     if (rubberBandIsTopLevel())
         m_rubberBand->setWindowOpacity(0.5);
@@ -161,7 +161,7 @@ void ClassicDropIndicatorOverlay::setCurrentDropLocation(DropLocation location)
         break;
     }
 
-    auto windowBeingDragged = DragController::instance()->windowBeingDragged();
+    auto windowBeingDragged = DragController::instance(ctx())->windowBeingDragged();
 
     Rect rect = m_dropArea->rectForDrop(windowBeingDragged, multisplitterLocation,
                                         m_dropArea->itemForGroup(relativeToFrame));
@@ -188,7 +188,7 @@ void ClassicDropIndicatorOverlay::updateWindowPosition()
 
 bool ClassicDropIndicatorOverlay::rubberBandIsTopLevel() const
 {
-    return Config::self().internalFlags() & Config::InternalFlag_TopLevelIndicatorRubberBand;
+    return Config::self(ctx()).internalFlags() & Config::InternalFlag_TopLevelIndicatorRubberBand;
 }
 
 Rect ClassicDropIndicatorOverlay::geometryForRubberband(Rect localRect) const

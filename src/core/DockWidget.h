@@ -72,11 +72,13 @@ public:
      * There's no parent argument. The DockWidget is either parented to FloatingWindow or MainWindow
      * when visible, or stays without a parent when hidden.
      */
-    explicit DockWidget(View *view, const QString &uniqueName, DockWidgetOptions options = {},
+    explicit DockWidget(int ctx, View *view, const QString &uniqueName, DockWidgetOptions options = {},
                         LayoutSaverOptions layoutSaverOptions = {});
 
     ///@brief destructor
     ~DockWidget() override;
+
+    int ctx() const { return m_ctx; }
 
     void init();
 
@@ -432,7 +434,7 @@ public:
     /// @brief Returns a dock widget by its name
     /// This is the same name you passed to DockWidget CTOR.
     /// nullptr is returned if the dock widget isn't found.
-    static DockWidget *byName(const QString &uniqueName);
+    static DockWidget *byName(int ctx, const QString &uniqueName);
 
     /// @brief Returns whether this widget has the LayoutSaverOption::Skip flag
     bool skipsRestore() const;
@@ -515,6 +517,11 @@ public:
 protected:
     void setParentView_impl(View *parent) override;
 
+    // NOTE: m_ctx must be declared (and initialized) before `d`, because
+    // DockWidget::Private's default member initializer reads q->ctx().
+    // C++ initializes members in declaration order, regardless of mem-init-list order.
+    const int m_ctx = 0;
+
 public:
     /// @brief Returns the private impl d-pointer.
     /// Use at your own risk. Any issues reported involving its usage will be closed.
@@ -526,7 +533,7 @@ public:
      * @brief Constructs a dock widget from its serialized form.
      * @internal
      */
-    static DockWidget *deserialize(const std::shared_ptr<LayoutSaver::DockWidget> &);
+    static DockWidget *deserialize(int ctx, const std::shared_ptr<LayoutSaver::DockWidget> &);
 
 private:
     KDDW_DELETE_COPY_CTOR(DockWidget)

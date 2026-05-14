@@ -36,7 +36,7 @@ void Separator::paintEvent(QPaintEvent *ev)
     if (d->freed())
         return;
 
-    if (KDDockWidgets::Config::self().disabledPaintEvents()
+    if (KDDockWidgets::Config::self(m_controller->ctx()).disabledPaintEvents()
         & KDDockWidgets::Config::CustomizableWidget_Separator) {
         QWidget::paintEvent(ev);
         return;

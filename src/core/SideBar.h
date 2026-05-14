@@ -30,8 +30,10 @@ class DOCKS_EXPORT SideBar : public Controller
 {
     Q_OBJECT
 public:
-    explicit SideBar(SideBarLocation, MainWindow *parent = nullptr);
+    explicit SideBar(int ctx, SideBarLocation, MainWindow *parent = nullptr);
     ~SideBar() override;
+
+    int ctx() const { return m_ctx; }
 
     void addDockWidget(DockWidget *dw);
     void removeDockWidget(DockWidget *dw);
@@ -80,6 +82,7 @@ private:
     Vector<DockWidget *> m_dockWidgets;
     const SideBarLocation m_location;
     const Qt::Orientation m_orientation;
+    const int m_ctx = 0;
 };
 
 }

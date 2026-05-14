@@ -44,26 +44,26 @@ int main(int argc, char *argv[])
     // Below we illustrate usage of our C++ API. Alternatively you can use declarative API.
     // See main.qml for examples of dockwidgets created directly in QML
 
-    auto dw1 = new KDDockWidgets::QtQuick::DockWidget("Dock #1");
+    auto dw1 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #1");
 
     dw1->setGuestItem(QStringLiteral("qrc:/Guest1.qml"));
     dw1->resize(QSize(800, 800));
     dw1->open();
 
-    auto dw3 = new KDDockWidgets::QtQuick::DockWidget("Dock #3");
+    auto dw3 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #3");
     dw3->setGuestItem(QStringLiteral("qrc:/Guest3.qml"));
 
     dw1->addDockWidgetToContainingWindow(dw3, KDDockWidgets::Location_OnRight);
 
     // Access the main area we created in QML with DockingArea {}
-    auto mainArea = KDDockWidgets::DockRegistry::self()->mainDockingAreas().constFirst();
-    auto mdiLayout = new KDDockWidgets::Core::MDILayout();
+    auto mainArea = KDDockWidgets::DockRegistry::self(0)->mainDockingAreas().constFirst();
+    auto mdiLayout = new KDDockWidgets::Core::MDILayout(0);
     mainArea->setPersistentCentralView(mdiLayout->view()->asWrapper());
 
-    auto dwInMDI1 = new KDDockWidgets::QtQuick::DockWidget("Dock #mdi1");
+    auto dwInMDI1 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #mdi1");
     dwInMDI1->setGuestItem(QStringLiteral("qrc:/Guest3.qml"));
 
-    auto dwInMDI2 = new KDDockWidgets::QtQuick::DockWidget("Dock #mdi2");
+    auto dwInMDI2 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #mdi2");
     dwInMDI2->setGuestItem(QStringLiteral("qrc:/Guest3.qml"));
 
     mdiLayout->addDockWidget(dwInMDI1->dockWidget(), { 100, 100 });

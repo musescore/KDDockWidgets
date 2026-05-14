@@ -57,11 +57,16 @@ class DOCKS_EXPORT ViewFactory : public Core::Object
 {
     Q_OBJECT
 public:
-    ViewFactory() = default;
+    explicit ViewFactory(int ctx = 0)
+        : m_ctx(ctx) {}
 
     ///@brief Destructor.
     /// Don't delete ViewFactory directly, it's owned by the framework.
     virtual ~ViewFactory();
+
+    ///@brief Returns the context this factory is bound to. Per-context Config/DockRegistry
+    /// instances are reached via ContextData::context(ctx).
+    int ctx() const { return m_ctx; }
 
     /// @brief Creates a dock widget. This is only used by MainWindow's persistent widget feature.
     /// In all other cases users will instantiate DockWidget directly
@@ -144,6 +149,9 @@ public:
 
     /// @ The drop indicator type
     static DropIndicatorType s_dropIndicatorType;
+
+protected:
+    const int m_ctx = 0;
 
 private:
     KDDW_DELETE_COPY_CTOR(ViewFactory)

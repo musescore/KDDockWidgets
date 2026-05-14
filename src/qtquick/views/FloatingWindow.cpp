@@ -46,11 +46,11 @@ class QuickView : public QQuickView
 {
     Q_OBJECT
 public:
-    explicit QuickView(QQmlEngine *qmlEngine, FloatingWindow *view)
+    explicit QuickView(int ctx, QQmlEngine *qmlEngine, FloatingWindow *view)
         : QQuickView(qmlEngine, nullptr)
         , m_view(view)
     {
-        if (Config::self().internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow)
+        if (Config::self(ctx).internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow)
             setColor(QColor(Qt::transparent));
 
         updateSize();
@@ -133,11 +133,11 @@ QuickView::~QuickView() = default;
 }
 
 
-FloatingWindow::FloatingWindow(Core::FloatingWindow *controller,
+FloatingWindow::FloatingWindow(int ctx, Core::FloatingWindow *controller,
                                QtQuick::MainWindow *parent,
                                Qt::WindowFlags flags)
     : QtQuick::View(controller, Core::ViewType::FloatingWindow, parent, flags)
-    , m_quickWindow(new QuickView(plat()->qmlEngine(), this))
+    , m_quickWindow(new QuickView(ctx, plat()->qmlEngine(), this))
     , m_controller(controller)
 {
     connect(m_quickWindow, &QWindow::windowStateChanged, this, &FloatingWindow::onWindowStateChanged);

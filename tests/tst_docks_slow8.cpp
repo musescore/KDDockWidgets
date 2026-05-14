@@ -106,7 +106,7 @@ void TestDocks::tst_resizeWindow()
     QVERIFY(oldWidth2 - oldWidth1 <= 1); // They're not equal if separator thickness if even
 
     if (doASaveRestore) {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saver.restoreLayout(saver.serializeLayout());
     }
 

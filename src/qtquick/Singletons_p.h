@@ -15,6 +15,7 @@
 #include "ViewFactory.h"
 #include "core/DockRegistry.h"
 
+#include <QPointer>
 #include <QQmlEngine>
 
 namespace KDDockWidgets::QtQuick {
@@ -28,10 +29,14 @@ class Singletons : public QObject
     Q_PROPERTY(KDDockWidgets::DockRegistry *dockRegistry READ dockRegistry CONSTANT)
     Q_PROPERTY(KDDockWidgets::QtQuickHelpers *helpers READ helpers CONSTANT)
 public:
+    explicit Singletons(QQmlEngine *engine);
     ~Singletons() override;
     KDDockWidgets::QtQuick::ViewFactory *widgetFactory() const;
     KDDockWidgets::DockRegistry *dockRegistry() const;
     KDDockWidgets::QtQuickHelpers *helpers() const;
+
+private:
+    QPointer<QQmlEngine> m_engine;
 };
 
 }

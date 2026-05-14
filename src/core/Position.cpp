@@ -46,7 +46,7 @@ void Positions::addPlaceholderItem(Core::Item *placeholder)
     if (containsPlaceholder(placeholder))
         return;
 
-    if (DockRegistry::self()->itemIsInMainWindow(placeholder)) {
+    if (DockRegistry::self(m_ctx)->itemIsInMainWindow(placeholder)) {
         // 2. We only support 1 main window placeholder for now
         removeMainWindowPlaceholders();
     }
@@ -69,7 +69,7 @@ bool Positions::itemIsBeingDestroyed(Core::Item *item) const
     if (item->m_inDtor)
         return true;
 
-    Core::Layout *layout = DockRegistry::self()->layoutForItem(item);
+    Core::Layout *layout = DockRegistry::self(m_ctx)->layoutForItem(item);
     if (layout) {
         /// FloatingWindow get destroyed with delete later
         /// its layout items aren't suitable to dock back in as they will be destroyed
@@ -133,7 +133,7 @@ void Positions::removeNonMainWindowPlaceholders()
     auto it = m_placeholders.begin();
     while (it != m_placeholders.end()) {
         ItemRef *itemref = it->get();
-        if (!itemref->isInMainWindow())
+        if (!itemref->isInMainWindow(m_ctx))
             it = m_placeholders.erase(it);
         else
             ++it;
@@ -145,7 +145,7 @@ void Positions::removeMainWindowPlaceholders()
     auto it = m_placeholders.begin();
     while (it != m_placeholders.end()) {
         ItemRef *itemref = it->get();
-        if (itemref->isInMainWindow())
+        if (itemref->isInMainWindow(m_ctx))
             it = m_placeholders.erase(it);
         else
             ++it;
@@ -191,7 +191,7 @@ void Positions::deserialize(const LayoutSaver::Position &lp)
                 auto serializedFw =
                     LayoutSaver::Layout::s_currentLayoutBeingRestored->floatingWindowForIndex(
                         index);
-                if (serializedFw.isValid()) {
+                if (serializedFw.isValid(m_ctx)) {
                     if (auto fw = serializedFw.floatingWindowInstance) {
                         layout = fw->layout();
                     } else {
@@ -204,7 +204,7 @@ void Positions::deserialize(const LayoutSaver::Position &lp)
             }
         } else {
             Core::MainWindow *mainWindow =
-                DockRegistry::self()->mainWindowByName(placeholder.mainWindowUniqueName);
+                DockRegistry::self(m_ctx)->mainWindowByName(placeholder.mainWindowUniqueName);
             layout = mainWindow->layout();
         }
 
@@ -230,7 +230,7 @@ LayoutSaver::Position Positions::serialize() const
         LayoutSaver::Placeholder p;
 
         Core::Item *item = itemRef->item;
-        Core::Layout *layout = DockRegistry::self()->layoutForItem(item);
+        Core::Layout *layout = DockRegistry::self(m_ctx)->layoutForItem(item);
         const auto itemIndex = layout->items().indexOf(item);
 
         auto fw = layout->floatingWindow();
@@ -241,7 +241,7 @@ LayoutSaver::Position Positions::serialize() const
         if (p.isFloatingWindow) {
             p.indexOfFloatingWindow = fw->beingDeleted()
                 ? -1
-                : DockRegistry::self()->floatingWindows().indexOf(
+                : DockRegistry::self(m_ctx)->floatingWindows().indexOf(
                       fw);
         } else {
             p.mainWindowUniqueName = mainWindow->uniqueName();
@@ -276,7 +276,7 @@ Positions::ItemRef::~ItemRef()
     }
 }
 
-bool Positions::ItemRef::isInMainWindow() const
+bool Positions::ItemRef::isInMainWindow(int ctx) const
 {
-    return item && DockRegistry::self()->itemIsInMainWindow(item);
+    return item && DockRegistry::self(ctx)->itemIsInMainWindow(item);
 }

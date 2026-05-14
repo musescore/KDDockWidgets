@@ -27,15 +27,15 @@ int SegmentedDropIndicatorOverlay::s_centralIndicatorMaxWidth = 300;
 int SegmentedDropIndicatorOverlay::s_centralIndicatorMaxHeight = 160;
 
 SegmentedDropIndicatorOverlay::SegmentedDropIndicatorOverlay(Core::DropArea *dropArea)
-    : DropIndicatorOverlay(dropArea, Config::self().viewFactory()->createSegmentedDropIndicatorOverlayView(this, dropArea->view()))
+    : DropIndicatorOverlay(dropArea, Config::self(dropArea->ctx()).viewFactory()->createSegmentedDropIndicatorOverlayView(this, dropArea->view()))
 {
     // If the app didn't choose opacity then we choose a suitable default value.
     // ClassicIndicators works fine with an opaque dragged window because the indicators have higher
     // Z, However for SegmentedIndicators the indicators are in the main window, so lower Z. Make
     // the dragged window translucent a bit, so we can see the indicators
-    const bool userChoseOpacity = !std::isnan(Config::self().draggedWindowOpacity());
+    const bool userChoseOpacity = !std::isnan(Config::self(ctx()).draggedWindowOpacity());
     if (!userChoseOpacity)
-        Config::self().setDraggedWindowOpacity(s_draggedWindowOpacity);
+        Config::self(ctx()).setDraggedWindowOpacity(s_draggedWindowOpacity);
 }
 
 SegmentedDropIndicatorOverlay::~SegmentedDropIndicatorOverlay() = default;

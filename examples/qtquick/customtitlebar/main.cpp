@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     KDDockWidgets::initFrontend(KDDockWidgets::FrontendType::QtQuick);
 
-    auto &config = KDDockWidgets::Config::self();
+    auto &config = KDDockWidgets::Config::self(0);
     auto flags = config.flags() | KDDockWidgets::Config::Flag_TitleBarIsFocusable;
 
     config.setFlags(flags);
@@ -59,24 +59,24 @@ int main(int argc, char *argv[])
     KDDockWidgets::QtQuick::Platform::instance()->setQmlEngine(&appEngine);
     appEngine.load((QUrl("qrc:/main.qml")));
 
-    auto dw1 = new KDDockWidgets::QtQuick::DockWidget("Dock #1");
+    auto dw1 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #1");
 
     dw1->setGuestItem(QStringLiteral("qrc:/Guest1.qml"));
     dw1->resize(QSize(800, 800));
     dw1->open();
 
-    auto dw2 = new KDDockWidgets::QtQuick::DockWidget("Dock #2");
+    auto dw2 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #2");
     dw2->setGuestItem(QStringLiteral("qrc:/Guest2.qml"));
     dw2->resize(QSize(800, 800));
     dw2->open();
 
-    auto dw3 = new KDDockWidgets::QtQuick::DockWidget("Dock #3");
+    auto dw3 = new KDDockWidgets::QtQuick::DockWidget(0, "Dock #3");
     dw3->setGuestItem(QStringLiteral("qrc:/Guest3.qml"));
 
     dw1->addDockWidgetToContainingWindow(dw3, KDDockWidgets::Location_OnRight);
 
     // Access the main area we created in QML with DockingArea {}
-    auto mainArea = KDDockWidgets::DockRegistry::self()->mainDockingAreas().constFirst();
+    auto mainArea = KDDockWidgets::DockRegistry::self(0)->mainDockingAreas().constFirst();
     mainArea->addDockWidget(dw2, KDDockWidgets::Location_OnTop);
 
     return app.exec();

@@ -38,14 +38,15 @@ public:
     std::unordered_map<DockWidget *, KDBindings::ScopedConnection> connections;
 };
 
-SideBar::SideBar(SideBarLocation location, MainWindow *parent)
-    : Controller(ViewType::SideBar, Config::self().viewFactory()->createSideBar(this, parent->view()))
+SideBar::SideBar(int ctx, SideBarLocation location, MainWindow *parent)
+    : Controller(ViewType::SideBar, Config::self(ctx).viewFactory()->createSideBar(this, parent->view()))
     , d(new Private())
     , m_mainWindow(parent)
     , m_location(location)
     , m_orientation((location == SideBarLocation::North || location == SideBarLocation::South)
                         ? Qt::Horizontal
                         : Qt::Vertical)
+    , m_ctx(ctx)
 {
     updateVisibility();
 

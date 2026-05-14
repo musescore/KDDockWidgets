@@ -33,9 +33,9 @@ static int s_numSeparators = 0;
 
 namespace {
 
-bool rubberBandIsTopLevel()
+bool rubberBandIsTopLevel(int ctx)
 {
-    return KDDockWidgets::Config::self().internalFlags()
+    return KDDockWidgets::Config::self(ctx).internalFlags()
         & KDDockWidgets::Config::InternalFlag_TopLevelIndicatorRubberBand;
 }
 
@@ -68,7 +68,7 @@ struct Separator::Private : public LayoutingSeparator
     void free() override
     {
 #ifdef KDDW_FRONTEND_QT
-        if (Config::self().internalFlags() & Config::InternalFlag_DeleteSeparatorsLater) {
+        if (Config::self(q->ctx()).internalFlags() & Config::InternalFlag_DeleteSeparatorsLater) {
             q->deleteLater();
             return;
         }
@@ -85,7 +85,7 @@ struct Separator::Private : public LayoutingSeparator
     Rect m_geometry;
     int lazyPosition = 0;
     View *lazyResizeRubberBand = nullptr;
-    const bool usesLazyResize = Config::self().flags() & Config::Flag_LazyResize;
+    const bool usesLazyResize = Config::self(q->ctx()).flags() & Config::Flag_LazyResize;
 };
 
 namespace {
@@ -99,14 +99,22 @@ Core::View *viewForLayoutingHost(LayoutingHost *host)
 }
 }
 
+static int ctxForLayoutingHost(LayoutingHost *host)
+{
+    if (auto layout = Layout::fromLayoutingHost(host))
+        return layout->ctx();
+    return 0;
+}
+
 Separator::Separator(LayoutingHost *host, Qt::Orientation orientation, Core::ItemBoxContainer *parentContainer)
-    : Controller(ViewType::Separator, Config::self().viewFactory()->createSeparator(this, viewForLayoutingHost(host)))
+    : Controller(ViewType::Separator, Config::self(ctxForLayoutingHost(host)).viewFactory()->createSeparator(this, viewForLayoutingHost(host)))
+    , m_ctx(ctxForLayoutingHost(host))
     , d(new Private(this, host, orientation, parentContainer))
 {
     view()->show();
     view()->init();
-    d->lazyResizeRubberBand = d->usesLazyResize ? Config::self().viewFactory()->createRubberBand(
-                                                      rubberBandIsTopLevel() ? nullptr : view())
+    d->lazyResizeRubberBand = d->usesLazyResize ? Config::self(m_ctx).viewFactory()->createRubberBand(
+                                                      rubberBandIsTopLevel(m_ctx) ? nullptr : view())
                                                 : nullptr;
     setVisible(true);
 }
@@ -156,7 +164,7 @@ void Separator::setLazyPosition(int pos)
         geo.moveLeft(pos);
     }
 
-    if (rubberBandIsTopLevel() && Platform::instance()->isQtWidgets())
+    if (rubberBandIsTopLevel(m_ctx) && Platform::instance()->isQtWidgets())
         geo.translate(view()->mapToGlobal(Point(0, 0)));
     d->lazyResizeRubberBand->setGeometry(geo);
 }
@@ -175,7 +183,7 @@ void Separator::onMousePress()
     if (d->lazyResizeRubberBand) {
         setLazyPosition(position());
         d->lazyResizeRubberBand->show();
-        if (rubberBandIsTopLevel() && Platform::instance()->isQtWidgets())
+        if (rubberBandIsTopLevel(m_ctx) && Platform::instance()->isQtWidgets())
             d->lazyResizeRubberBand->raise();
     }
 }

@@ -59,7 +59,7 @@ void KDDockWidgets::registerQmlTypes()
     qmlRegisterUncreatableType<QtQuick::ClassicDropIndicatorOverlay>("com.kdab.dockwidgets", 2, 0,
                                                                      "ClassicDropIndicatorOverlay", QStringLiteral("Internal usage only"));
 
-    qmlRegisterSingletonType<QtQuick::Singletons>("com.kdab.dockwidgets", 2, 0, "Singletons", [](QQmlEngine *, QJSEngine *) -> QObject * {
-        return new QtQuick::Singletons();
+    qmlRegisterSingletonType<QtQuick::Singletons>("com.kdab.dockwidgets", 2, 0, "Singletons", [](QQmlEngine *engine, QJSEngine *) -> QObject * {
+        return new QtQuick::Singletons(engine);
     });
 }

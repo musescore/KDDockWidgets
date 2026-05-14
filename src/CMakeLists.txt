@@ -23,6 +23,7 @@ set(KDDW_LAYOUTING_SRCS core/layouting/Item.cpp core/layouting/ItemFreeContainer
 
 set(KDDW_BACKEND_SRCS
     Config.cpp
+    ContextData.cpp
     LayoutSaver.cpp
     core/Position.cpp
     core/DelayedCall.cpp
@@ -182,7 +183,7 @@ if(KDDockWidgets_DEVELOPER_MODE)
     set(KDDW_QTCOMMON_SRCS ${KDDW_QTCOMMON_SRCS} qtcommon/TestHelpers_qt.cpp)
 endif()
 
-set(KDDW_PUBLIC_HEADERS docks_export.h Config.h KDDockWidgets.h LayoutSaver.h Qt5Qt6Compat_p.h QtCompat_p.h)
+set(KDDW_PUBLIC_HEADERS docks_export.h Config.h ContextData.h KDDockWidgets.h LayoutSaver.h Qt5Qt6Compat_p.h QtCompat_p.h)
 
 set(KDDW_CORE_HEADERS
     core/DockWidget.h

@@ -53,10 +53,10 @@ public:
     QQmlEngine *const m_qmlEngine;
 };
 
-DockWidget::DockWidget(const QString &uniqueName, DockWidgetOptions options,
+DockWidget::DockWidget(int ctx, const QString &uniqueName, DockWidgetOptions options,
                        LayoutSaverOptions layoutSaverOptions,
                        Qt::WindowFlags windowFlags, QQmlEngine *engine)
-    : View(new Core::DockWidget(this, uniqueName, options, layoutSaverOptions), Core::ViewType::DockWidget,
+    : View(new Core::DockWidget(ctx, this, uniqueName, options, layoutSaverOptions), Core::ViewType::DockWidget,
            nullptr, windowFlags)
     , Core::DockWidgetViewInterface(asDockWidgetController())
     , d(new Private(this, engine ? engine : plat()->qmlEngine()))

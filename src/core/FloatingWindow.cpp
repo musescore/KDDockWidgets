@@ -65,7 +65,7 @@ static FloatingWindowFlags floatingWindowFlagsForGroup(Group *group)
 /** static */
 Qt::WindowFlags FloatingWindow::s_windowFlagsOverride = {};
 
-static Qt::WindowFlags windowFlagsToUse(FloatingWindowFlags requestedFlags)
+static Qt::WindowFlags windowFlagsToUse(int ctx, FloatingWindowFlags requestedFlags)
 {
     if (requestedFlags & FloatingWindowFlag::UseQtTool) {
         // User has explicitly chosen Qt::Tool for this FloatingWindow
@@ -82,17 +82,17 @@ static Qt::WindowFlags windowFlagsToUse(FloatingWindowFlags requestedFlags)
         return FloatingWindow::s_windowFlagsOverride;
     }
 
-    if (KDDockWidgets::usesNativeDraggingAndResizing())
+    if (KDDockWidgets::usesNativeDraggingAndResizing(ctx))
         return Qt::Window;
 
-    if (Config::self().internalFlags()
+    if (Config::self(ctx).internalFlags()
         & Config::InternalFlag_DontUseQtToolWindowsForFloatingWindows)
         return Qt::Window;
 
     return Qt::Tool;
 }
 
-static MainWindow *hackFindParentHarder(Core::Group *group, MainWindow *candidateParent)
+static MainWindow *hackFindParentHarder(int ctx, Core::Group *group, MainWindow *candidateParent)
 {
     const FloatingWindowFlags requestedFlags =
         group ? group->requestedFloatingWindowFlags() : FloatingWindowFlag::FromGlobalConfig;
@@ -101,7 +101,7 @@ static MainWindow *hackFindParentHarder(Core::Group *group, MainWindow *candidat
         return nullptr;
     }
 
-    if (Config::self().internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows) {
+    if (Config::self(ctx).internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows) {
         return nullptr;
     }
 
@@ -113,7 +113,7 @@ static MainWindow *hackFindParentHarder(Core::Group *group, MainWindow *candidat
     if (candidateParent)
         return candidateParent;
 
-    const MainWindow::List windows = DockRegistry::self()->mainwindows();
+    const MainWindow::List windows = DockRegistry::self(ctx)->mainwindows();
 
     if (windows.isEmpty())
         return nullptr;
@@ -123,7 +123,7 @@ static MainWindow *hackFindParentHarder(Core::Group *group, MainWindow *candidat
 
     const Vector<QString> affinities = group ? group->affinities() : Vector<QString>();
     const MainWindow::List mainWindows =
-        DockRegistry::self()->mainWindowsWithAffinity(affinities);
+        DockRegistry::self(ctx)->mainWindowsWithAffinity(affinities);
 
     if (mainWindows.isEmpty()) {
         KDDW_ERROR("No window with affinity={} found", affinities, "found");
@@ -133,26 +133,26 @@ static MainWindow *hackFindParentHarder(Core::Group *group, MainWindow *candidat
     return mainWindows.first();
 }
 
-static MainWindow *actualParent(MainWindow *candidate)
+static MainWindow *actualParent(int ctx, MainWindow *candidate)
 {
-    return (Config::self().internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows)
+    return (Config::self(ctx).internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows)
         ? nullptr
         : candidate;
 }
 
-FloatingWindow::FloatingWindow(Rect suggestedGeometry, MainWindow *parent,
+FloatingWindow::FloatingWindow(int ctx, Rect suggestedGeometry, MainWindow *parent,
                                FloatingWindowFlags requestedFlags)
     : Controller(ViewType::FloatingWindow,
-                 Config::self().viewFactory()->createFloatingWindow(
-                     this, actualParent(parent), windowFlagsToUse(requestedFlags)))
-    , Draggable(view(),
-                KDDockWidgets::usesNativeDraggingAndResizing()) // FloatingWindow is only draggable
+                 Config::self(ctx).viewFactory()->createFloatingWindow(
+                     this, actualParent(ctx, parent), windowFlagsToUse(ctx, requestedFlags)))
+    , Draggable(ctx, view(),
+                KDDockWidgets::usesNativeDraggingAndResizing(ctx)) // FloatingWindow is only draggable
                                                                 // when using a native title bar.
                                                                 // Otherwise the
                                                                 // KDDockWidgets::TitleBar is the
                                                                 // draggable
-    , d(new Private(requestedFlags, this))
-    , m_titleBar(new Core::TitleBar(this))
+    , d(new Private(ctx, requestedFlags, this))
+    , m_titleBar(new Core::TitleBar(ctx, this))
 {
     view()->init();
     if (!suggestedGeometry.isNull())
@@ -174,7 +174,7 @@ FloatingWindow::FloatingWindow(Rect suggestedGeometry, MainWindow *parent,
     }
 #endif
 
-    DockRegistry::self()->registerFloatingWindow(this);
+    DockRegistry::self(m_ctx)->registerFloatingWindow(this);
 
     if (d->m_flags & FloatingWindowFlag::KeepAboveIfNotUtilityWindow)
         view()->setFlag(Qt::WindowStaysOnTopHint, true);
@@ -204,9 +204,9 @@ FloatingWindow::FloatingWindow(Rect suggestedGeometry, MainWindow *parent,
     });
 }
 
-FloatingWindow::FloatingWindow(Core::Group *group, Rect suggestedGeometry,
+FloatingWindow::FloatingWindow(int ctx, Core::Group *group, Rect suggestedGeometry,
                                MainWindow *parent)
-    : FloatingWindow(suggestedGeometry, hackFindParentHarder(group, parent), floatingWindowFlagsForGroup(group))
+    : FloatingWindow(ctx, suggestedGeometry, hackFindParentHarder(ctx, group, parent), floatingWindowFlagsForGroup(group))
 {
     ScopedValueRollback guard(m_disableSetVisible, true);
 
@@ -239,12 +239,12 @@ FloatingWindow::FloatingWindow(Core::Group *group, Rect suggestedGeometry,
 
         d->m_dropArea->addMultiSplitter(dropAreaMDIWrapper, Location_OnTop);
         dwMDIWrapper->setVisible(false);
-        if (!DragController::instance()->isIdle()) {
+        if (!DragController::instance(m_ctx)->isIdle()) {
             // We're dragging a MDI window and we reached the border, detaching it, and making it
             // float. We can't delete the wrapper group just yet, as that would delete the title bar
             // which is currently being dragged. Delete it once the drag finishes
-            d->m_currentStateChangedConnection = DragController::instance()->currentStateChanged.connect([this, dwMDIWrapper] {
-                if (DragController::instance()->isIdle()) {
+            d->m_currentStateChangedConnection = DragController::instance(m_ctx)->currentStateChanged.connect([this, dwMDIWrapper] {
+                if (DragController::instance(m_ctx)->isIdle()) {
                     d->m_currentStateChangedConnection = KDBindings::ScopedConnection();
                     delete dwMDIWrapper;
                 }
@@ -281,21 +281,21 @@ FloatingWindow::~FloatingWindow()
     delete m_nchittestFilter;
 #endif
 
-    DockRegistry::self()->unregisterFloatingWindow(this);
+    DockRegistry::self(m_ctx)->unregisterFloatingWindow(this);
     delete m_titleBar;
     delete d;
 }
 
 void FloatingWindow::maybeCreateResizeHandler()
 {
-    if (!KDDockWidgets::usesNativeDraggingAndResizing()) {
+    if (!KDDockWidgets::usesNativeDraggingAndResizing(m_ctx)) {
         view()->setFlag(Qt::FramelessWindowHint, true);
         // EGLFS can't have different mouse cursors per window, needs global filter hack to unset
         // when cursor leaves
         const auto filterMode = isEGLFS() ? WidgetResizeHandler::EventFilterMode::Global
                                           : WidgetResizeHandler::EventFilterMode::Local;
         setWidgetResizeHandler(
-            new WidgetResizeHandler(filterMode, WidgetResizeHandler::WindowMode::TopLevel, view()));
+            new WidgetResizeHandler(m_ctx, filterMode, WidgetResizeHandler::WindowMode::TopLevel, view()));
     }
 }
 
@@ -390,7 +390,7 @@ void FloatingWindow::scheduleDeleteLater()
 {
     m_deleteScheduled = true;
     view()->d->setAboutToBeDestroyed();
-    DockRegistry::self()->unregisterFloatingWindow(this);
+    DockRegistry::self(m_ctx)->unregisterFloatingWindow(this);
     destroyLater();
 }
 
@@ -410,7 +410,7 @@ bool FloatingWindow::isInDragArea(Point globalPoint) const
     // A click near the border will still send a Qt::NonClientMousePressEvent. We shouldn't
     // interpret that as a drag, as it's for a native resize.
     // Keep track of how we handled the WM_NCHITTEST
-    if (usesAeroSnapWithCustomDecos())
+    if (usesAeroSnapWithCustomDecos(m_ctx))
         return m_lastHitTest == HTCAPTION;
 #endif
 
@@ -519,7 +519,7 @@ void FloatingWindow::updateTitleBarVisibility()
     for (Core::Group *group : groups)
         group->updateTitleBarVisibility();
 
-    if (KDDockWidgets::usesClientTitleBar()) {
+    if (KDDockWidgets::usesClientTitleBar(m_ctx)) {
         if ((d->m_flags & FloatingWindowFlag::HideTitleBarWhenTabsVisible)
             && !(d->m_flags & FloatingWindowFlag::AlwaysTitleBarWhenFloating)) {
             if (hasSingleGroup()) {
@@ -618,9 +618,9 @@ LayoutSaver::FloatingWindow FloatingWindow::serialize() const
     fw.flags = d->m_flags;
 
     Window::Ptr transientParentWindow = view()->d->transientWindow();
-    auto transientMainWindow = DockRegistry::self()->mainWindowForHandle(transientParentWindow);
+    auto transientMainWindow = DockRegistry::self(m_ctx)->mainWindowForHandle(transientParentWindow);
     fw.parentIndex =
-        transientMainWindow ? DockRegistry::self()->mainwindows().indexOf(transientMainWindow) : -1;
+        transientMainWindow ? DockRegistry::self(m_ctx)->mainwindows().indexOf(transientMainWindow) : -1;
 
     return fw;
 }
@@ -807,7 +807,7 @@ void FloatingWindow::focus(Qt::FocusReason reason)
     groups.constFirst()->focus(reason);
 }
 
-static FloatingWindowFlags flagsForFloatingWindow(FloatingWindowFlags requestedFlags)
+static FloatingWindowFlags flagsForFloatingWindow(int ctx, FloatingWindowFlags requestedFlags)
 {
     if (!(requestedFlags & FloatingWindowFlag::FromGlobalConfig)) {
         // User requested specific flags for this floating window
@@ -818,36 +818,36 @@ static FloatingWindowFlags flagsForFloatingWindow(FloatingWindowFlags requestedF
 
     FloatingWindowFlags flags = {};
 
-    if ((Config::self().flags() & Config::Flag_TitleBarHasMinimizeButton)
+    if ((Config::self(ctx).flags() & Config::Flag_TitleBarHasMinimizeButton)
         == Config::Flag_TitleBarHasMinimizeButton)
         flags |= FloatingWindowFlag::TitleBarHasMinimizeButton;
 
-    if (Config::self().flags() & Config::Flag_TitleBarHasMaximizeButton)
+    if (Config::self(ctx).flags() & Config::Flag_TitleBarHasMaximizeButton)
         flags |= FloatingWindowFlag::TitleBarHasMaximizeButton;
 
-    if (Config::self().flags() & Config::Flag_KeepAboveIfNotUtilityWindow)
+    if (Config::self(ctx).flags() & Config::Flag_KeepAboveIfNotUtilityWindow)
         flags |= FloatingWindowFlag::KeepAboveIfNotUtilityWindow;
 
-    if (Config::self().flags() & Config::Flag_NativeTitleBar)
+    if (Config::self(ctx).flags() & Config::Flag_NativeTitleBar)
         flags |= FloatingWindowFlag::NativeTitleBar;
 
-    if (Config::self().flags() & Config::Flag_HideTitleBarWhenTabsVisible)
+    if (Config::self(ctx).flags() & Config::Flag_HideTitleBarWhenTabsVisible)
         flags |= FloatingWindowFlag::HideTitleBarWhenTabsVisible;
 
-    if (Config::self().flags() & Config::Flag_AlwaysTitleBarWhenFloating)
+    if (Config::self(ctx).flags() & Config::Flag_AlwaysTitleBarWhenFloating)
         flags |= FloatingWindowFlag::AlwaysTitleBarWhenFloating;
 
-    if (Config::self().internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows)
+    if (Config::self(ctx).internalFlags() & Config::InternalFlag_DontUseParentForFloatingWindows)
         flags |= FloatingWindowFlag::DontUseParentForFloatingWindows;
 
-    if (Config::self().internalFlags() & Config::InternalFlag_DontUseQtToolWindowsForFloatingWindows)
+    if (Config::self(ctx).internalFlags() & Config::InternalFlag_DontUseQtToolWindowsForFloatingWindows)
         flags |= FloatingWindowFlag::UseQtWindow;
 
     return flags;
 }
 
-FloatingWindow::Private::Private(FloatingWindowFlags requestedFlags, FloatingWindow *q)
-    : m_flags(flagsForFloatingWindow(requestedFlags))
-    , m_dropArea(new DropArea(q->view(), MainWindowOption_None))
+FloatingWindow::Private::Private(int ctx, FloatingWindowFlags requestedFlags, FloatingWindow *q)
+    : m_flags(flagsForFloatingWindow(ctx, requestedFlags))
+    , m_dropArea(new DropArea(ctx, q->view(), MainWindowOption_None))
 {
 }

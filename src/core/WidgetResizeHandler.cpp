@@ -60,10 +60,11 @@ using namespace KDDockWidgets::Core;
 #endif
 
 bool WidgetResizeHandler::s_disableAllHandlers = false;
-WidgetResizeHandler::WidgetResizeHandler(EventFilterMode filterMode, WindowMode windowMode,
+WidgetResizeHandler::WidgetResizeHandler(int ctx, EventFilterMode filterMode, WindowMode windowMode,
                                          View *target)
     : m_usesGlobalEventFilter(filterMode == EventFilterMode::Global)
     , m_isTopLevelWindowResizer(windowMode == WindowMode::TopLevel)
+    , m_ctx(ctx)
 {
     setTarget(target);
 }
@@ -186,7 +187,7 @@ bool WidgetResizeHandler::onMouseEvent(View *widget, MouseEvent *e)
 
         m_resizingInProgress = true;
         if (isMDI())
-            DockRegistry::self()->dptr()->groupInMDIResizeChanged.emit();
+            DockRegistry::self(m_ctx)->dptr()->groupInMDIResizeChanged.emit();
         mNewPosition = Qt5Qt6Compat::eventGlobalPos(e);
         mCursorPos = cursorPos;
 
@@ -195,7 +196,7 @@ bool WidgetResizeHandler::onMouseEvent(View *widget, MouseEvent *e)
     case Event::MouseButtonRelease: {
         m_resizingInProgress = false;
         if (isMDI()) {
-            DockRegistry::self()->dptr()->groupInMDIResizeChanged.emit();
+            DockRegistry::self(m_ctx)->dptr()->groupInMDIResizeChanged.emit();
             // Usually in KDDW all geometry changes are done in the layout items, which propagate to
             // the widgets When resizing a MDI however, we're resizing the widget directly. So
             // update the corresponding layout item when we're finished.
@@ -222,7 +223,7 @@ bool WidgetResizeHandler::onMouseEvent(View *widget, MouseEvent *e)
             break;
 
         if (isMDI()) {
-            const Core::Group *groupBeingResized = DockRegistry::self()->groupInMDIResize();
+            const Core::Group *groupBeingResized = DockRegistry::self(m_ctx)->groupInMDIResize();
             const bool otherGroupBeingResized =
                 groupBeingResized && groupBeingResized->view() != mTarget;
             if (otherGroupBeingResized) {
@@ -370,7 +371,7 @@ bool WidgetResizeHandler::handleWindowsNativeEvent(Core::FloatingWindow *fw,
 
     auto msg = static_cast<MSG *>(message);
     if (msg->message == WM_NCHITTEST) {
-        if (DragController::instance()->isInClientDrag()) {
+        if (DragController::instance(m_ctx)->isInClientDrag()) {
             // There's a non-native drag going on.
             *result = 0;
             return false;
@@ -382,7 +383,7 @@ bool WidgetResizeHandler::handleWindowsNativeEvent(Core::FloatingWindow *fw,
         fw->setLastHitTest(*result);
         return ret;
     } else if (msg->message == WM_NCLBUTTONDBLCLK) {
-        if ((Config::self().flags() & Config::Flag_DoubleClickMaximizes)) {
+        if ((Config::self(m_ctx).flags() & Config::Flag_DoubleClickMaximizes)) {
             return handleWindowsNativeEvent(fw->view()->window(), msg, result, {});
         } else {
             // Let the title bar handle it. It will re-dock the window.
@@ -684,7 +685,7 @@ void WidgetResizeHandler::setupWindow(Core::Window::Ptr window)
         });
 
         const bool usesTransparentFloatingWindow =
-            Config::self().internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow;
+            Config::self(m_ctx).internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow;
         if (!usesTransparentFloatingWindow) {
             // This enables the native drop shadow.
             // Doesn't work well if the floating window has transparent round corners (shows weird

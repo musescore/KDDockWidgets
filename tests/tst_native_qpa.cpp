@@ -130,7 +130,7 @@ void TestNativeQPA::tst_restoreNormalFromMaximized()
     m->show();
     QVERIFY(m->isVisible());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     m->view()->showMaximized();
@@ -184,7 +184,7 @@ void TestNativeQPA::tst_restoreMaximizedFromNormal()
     const auto expectedMaximizedGeometry = m->geometry();
     QVERIFY(initialSize != expectedMaximizedGeometry.size());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     m->view()->showNormal();
@@ -245,7 +245,7 @@ void TestNativeQPA::tst_restoreMaximizedFromMaximized()
     const auto expectedMaximizedGeometry = m->geometry();
     QVERIFY(initialSize != expectedMaximizedGeometry.size());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     QTest::qWait(1000);

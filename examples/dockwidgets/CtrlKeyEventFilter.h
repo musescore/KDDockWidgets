@@ -34,7 +34,7 @@ public:
         if (me->key() != Qt::Key_Control)
             return false;
 
-        KDDockWidgets::Config::self().setDropIndicatorsInhibited(ev->type() == QEvent::KeyRelease);
+        KDDockWidgets::Config::self(0).setDropIndicatorsInhibited(ev->type() == QEvent::KeyRelease);
 
         return false;
     }

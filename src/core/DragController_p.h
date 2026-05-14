@@ -89,7 +89,13 @@ public:
     };
     Q_ENUM(State)
 
-    static DragController *instance();
+    ///@brief Returns the DragController bound to the given context. Owned by ContextData.
+    static DragController *instance(int ctx);
+
+    ///@brief Constructs a per-context DragController. Used by ContextData.
+    explicit DragController(int ctx, Core::Object *parent = nullptr);
+
+    int ctx() const { return m_ctx; }
 
     // Registers something that wants to be able to be dragged
     void registerDraggable(Draggable *);
@@ -179,6 +185,7 @@ private:
     bool m_nonClientDrag = false; // native title bar drag
     bool m_inQDrag = false; // wayland drag
     bool m_inProgrammaticDrag = false; // via DockWidget::startDrag()
+    const int m_ctx = 0;
 };
 
 class StateBase : public State

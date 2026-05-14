@@ -55,7 +55,7 @@ QPoint getCenterOfDockWidget(const KDDockWidgets::QtWidgets::DockWidget &dockWid
 
 KDDockWidgets::QtWidgets::MainWindow *createMainWindow(const QString &name)
 {
-    auto mainWindow = new KDDockWidgets::QtWidgets::MainWindow(name);
+    auto mainWindow = new KDDockWidgets::QtWidgets::MainWindow(0, name);
     mainWindow->showMaximized();
 
     return mainWindow;
@@ -63,7 +63,7 @@ KDDockWidgets::QtWidgets::MainWindow *createMainWindow(const QString &name)
 
 KDDockWidgets::QtWidgets::DockWidget *createDockWidget(const QString &name)
 {
-    auto dockWidget = new KDDockWidgets::QtWidgets::DockWidget(name);
+    auto dockWidget = new KDDockWidgets::QtWidgets::DockWidget(0, name);
     dockWidget->setWidget(new QWidget());
     return dockWidget;
 }

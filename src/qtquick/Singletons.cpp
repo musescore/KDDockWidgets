@@ -13,21 +13,27 @@
 #include "ViewFactory.h"
 #include "core/DockRegistry.h"
 #include "core/DockWidget.h"
+#include "QmlConfig.h"
 #include "Platform.h"
 #include "Helpers_p.h"
 
 using namespace KDDockWidgets::QtQuick;
 
+Singletons::Singletons(QQmlEngine *engine)
+    : m_engine(engine)
+{
+}
+
 Singletons::~Singletons() = default;
 
 KDDockWidgets::QtQuick::ViewFactory *Singletons::widgetFactory() const
 {
-    return QtQuick::ViewFactory::self();
+    return QtQuick::ViewFactory::self(KDDockWidgets::ctxForEngine(m_engine));
 }
 
 KDDockWidgets::DockRegistry *Singletons::dockRegistry() const
 {
-    return DockRegistry::self();
+    return DockRegistry::self(KDDockWidgets::ctxForEngine(m_engine));
 }
 
 KDDockWidgets::QtQuickHelpers *Singletons::helpers() const

@@ -42,8 +42,10 @@ class DOCKS_EXPORT Draggable
 public:
     typedef Vector<Draggable *> List;
 
-    explicit Draggable(View *thisView, bool enabled = true);
+    explicit Draggable(int ctx, View *thisView, bool enabled = true);
     virtual ~Draggable();
+
+    int ctx() const { return m_ctx; }
     View *asView() const;
     Controller *asController() const;
 
@@ -115,6 +117,9 @@ public:
     ///@brief Returns whether this draggable is within a programmatic drag
     /// i.e. one started with DockWidget::startDragging()
     bool isInProgrammaticDrag() const;
+
+protected:
+    const int m_ctx = 0;
 
 private:
     class Private;

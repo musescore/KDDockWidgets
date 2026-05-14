@@ -17,6 +17,7 @@
  */
 
 #include "Config.h"
+#include "ContextData.h"
 #include "core/layouting/Item_p.h"
 #include "core/DockRegistry.h"
 #include "core/DockRegistry_p.h"
@@ -48,10 +49,13 @@ static ViewFactory *createDefaultViewFactory()
 class Config::Private
 {
 public:
-    Private()
-        : m_viewFactory(createDefaultViewFactory())
+    explicit Private(int ctx)
+        : m_ctx(ctx)
+        , m_viewFactory(createDefaultViewFactory())
     {
     }
+
+    const int m_ctx;
 
     ~Private()
     {
@@ -81,23 +85,25 @@ public:
 };
 
 Config::Config()
-    : d(new Private())
+    : d(new Private(0))
 {
     d->fixFlags();
 }
 
-Config &Config::self()
+Config::Config(int ctx)
+    : d(new Private(ctx))
 {
-    static Config config;
-    return config;
+    d->fixFlags();
+}
+
+Config &Config::self(int ctx)
+{
+    return *ContextData::context(ctx)->config;
 }
 
 Config::~Config()
 {
     delete d;
-    if (Platform::isInitialized()) {
-        delete Platform::instance();
-    }
 }
 
 Config::Flags Config::flags() const
@@ -126,7 +132,7 @@ void Config::setFlags(Flags f)
     const bool nonMutableFlagsChanged = (changedFlags & ~mutableFlags);
 
     if (nonMutableFlagsChanged) {
-        auto dr = DockRegistry::self();
+        auto dr = DockRegistry::self(d->m_ctx);
         if (!dr->isEmpty(/*excludeBeingDeleted=*/true)) {
             std::cerr
                 << "Config::setFlags: "
@@ -142,15 +148,15 @@ void Config::setFlags(Flags f)
 }
 
 /** static*/
-bool Config::hasFlag(Flag flag)
+bool Config::hasFlag(int ctx, Flag flag)
 {
-    return (Config::self().flags() & flag) == flag;
+    return (Config::self(ctx).flags() & flag) == flag;
 }
 
 /** static*/
-bool Config::hasMDIFlag(MDIFlag flag)
+bool Config::hasMDIFlag(int ctx, MDIFlag flag)
 {
-    return (Config::self().mdiFlags() & flag) == flag;
+    return (Config::self(ctx).mdiFlags() & flag) == flag;
 }
 
 void Config::setDockWidgetFactoryFunc(DockWidgetFactoryFunc func)
@@ -202,7 +208,7 @@ int Config::layoutSpacing() const
 
 void Config::setSeparatorThickness(int value)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/true)) {
+    if (!DockRegistry::self(d->m_ctx)->isEmpty(/*excludeBeingDeleted=*/true)) {
         std::cerr
             << "Config::setSeparatorThickness: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -219,7 +225,7 @@ void Config::setSeparatorThickness(int value)
 
 void Config::setLayoutSpacing(int value)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/true)) {
+    if (!DockRegistry::self(d->m_ctx)->isEmpty(/*excludeBeingDeleted=*/true)) {
         std::cerr
             << "Config::setLayoutSpacing: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -295,7 +301,7 @@ DockWidgetTabIndexOverrideFunc Config::dockWidgetTabIndexOverrideFunc() const
 
 void Config::setAbsoluteWidgetMinSize(Size size)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/false)) {
+    if (!DockRegistry::self(d->m_ctx)->isEmpty(/*excludeBeingDeleted=*/false)) {
         std::cerr
             << "Config::setAbsoluteWidgetMinSize: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -311,7 +317,7 @@ Size Config::absoluteWidgetMinSize() const
 
 void Config::setAbsoluteWidgetMaxSize(Size size)
 {
-    if (!DockRegistry::self()->isEmpty(/*excludeBeingDeleted=*/false)) {
+    if (!DockRegistry::self(d->m_ctx)->isEmpty(/*excludeBeingDeleted=*/false)) {
         std::cerr
             << "Config::setAbsoluteWidgetMinSize: Only use this function at startup before creating any DockWidget or MainWindow\n";
         return;
@@ -423,7 +429,7 @@ void Config::setDropIndicatorsInhibited(bool inhibit) const
 {
     if (d->m_dropIndicatorsInhibited != inhibit) {
         d->m_dropIndicatorsInhibited = inhibit;
-        DockRegistry::self()->dptr()->dropIndicatorsInhibitedChanged.emit(inhibit);
+        DockRegistry::self(d->m_ctx)->dptr()->dropIndicatorsInhibitedChanged.emit(inhibit);
     }
 }
 

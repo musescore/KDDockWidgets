@@ -74,7 +74,7 @@ Core::View *ViewFactory::createDockWidget(const QString &uniqueName, QQmlEngine 
                                           LayoutSaverOptions layoutSaverOptions,
                                           Qt::WindowFlags windowFlags) const
 {
-    return new QtQuick::DockWidget(uniqueName, options, layoutSaverOptions, windowFlags,
+    return new QtQuick::DockWidget(m_ctx, uniqueName, options, layoutSaverOptions, windowFlags,
                                    qmlEngine);
 }
 
@@ -112,7 +112,7 @@ Core::View *ViewFactory::createFloatingWindow(Core::FloatingWindow *controller,
     auto mainwindow = parent
         ? qobject_cast<QtQuick::MainWindow *>(QtQuick::asQQuickItem(parent->view()))
         : nullptr;
-    return new FloatingWindow(controller, mainwindow, flags);
+    return new FloatingWindow(m_ctx, controller, mainwindow, flags);
 }
 
 Core::View *ViewFactory::createRubberBand(Core::View *parent) const
@@ -233,13 +233,13 @@ Core::ClassicIndicatorWindowViewInterface *ViewFactory::createClassicIndicatorWi
     return new QtQuick::ClassicDropIndicatorOverlay(classicIndicators, parent);
 }
 
-ViewFactory *ViewFactory::self()
+ViewFactory *ViewFactory::self(int ctx)
 {
-    auto factory = qobject_cast<ViewFactory *>(Config::self().viewFactory());
+    auto factory = qobject_cast<ViewFactory *>(Config::self(ctx).viewFactory());
 
     if (!factory)
         qWarning() << Q_FUNC_INFO << "Expected a ViewFactory subclass, not"
-                   << Config::self().viewFactory();
+                   << Config::self(ctx).viewFactory();
 
     return factory;
 }

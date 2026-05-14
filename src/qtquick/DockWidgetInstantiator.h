@@ -34,6 +34,7 @@ class DockWidgetInstantiator : public QQuickItem
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(DockWidget)
+    Q_PROPERTY(int ctx READ ctx WRITE setCtx NOTIFY ctxChanged)
     Q_PROPERTY(QString uniqueName READ uniqueName WRITE setUniqueName NOTIFY uniqueNameChanged)
     Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(KDDockWidgets::QtQuick::DockWidget *dockWidget READ dockWidget NOTIFY
@@ -52,6 +53,9 @@ class DockWidgetInstantiator : public QQuickItem
 public:
     DockWidgetInstantiator();
     ~DockWidgetInstantiator() override;
+
+    int ctx() const;
+    void setCtx(int);
 
     QString uniqueName() const;
     void setUniqueName(const QString &);
@@ -116,6 +120,7 @@ protected:
     void componentComplete() override;
 
 Q_SIGNALS:
+    void ctxChanged();
     void uniqueNameChanged();
     void sourceChanged();
     void dockWidgetChanged();

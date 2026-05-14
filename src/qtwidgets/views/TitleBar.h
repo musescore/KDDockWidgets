@@ -41,7 +41,7 @@ public:
     /// Special ctor for the rare use case of using QtWidgets::TitleBar in a non-dock widget.
     /// For example, just to have a title bar in QMessageBox popups under EGLFS, so you don't have to
     /// style things twice.
-    explicit TitleBar(QWidget *parent = nullptr);
+    explicit TitleBar(int ctx, QWidget *parent = nullptr);
 
     ~TitleBar() override;
 

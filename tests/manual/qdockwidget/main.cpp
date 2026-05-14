@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     qApp->setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
     KDDockWidgets::initFrontend(KDDockWidgets::FrontendType::QtWidgets);
 
-    KDDockWidgets::QtWidgets::MainWindow mainWindow("mainwindow1", KDDockWidgets::MainWindowOption_QDockWidgets);
+    KDDockWidgets::QtWidgets::MainWindow mainWindow(0, "mainwindow1", KDDockWidgets::MainWindowOption_QDockWidgets);
     mainWindow.resize(1000, 1000);
 
     auto dock1 = new CustomDockWidget("d1", &mainWindow);

@@ -57,8 +57,10 @@ class DOCKS_EXPORT Layout : public Controller
 {
     Q_OBJECT
 public:
-    explicit Layout(ViewType, View *);
+    explicit Layout(int ctx, ViewType, View *);
     ~Layout();
+
+    int ctx() const { return m_ctx; }
 
     /// @brief Returns whether this layout is in a MainWindow
     /// @param honourNesting If true, then we'll count DropAreas/MDIAreas which are nested into
@@ -230,6 +232,9 @@ protected:
 private:
     Private *const d;
     bool onResize(Size newSize);
+
+protected:
+    const int m_ctx = 0;
 };
 
 }

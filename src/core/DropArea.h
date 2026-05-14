@@ -55,7 +55,7 @@ class DOCKS_EXPORT DropArea : public Layout
 {
     Q_OBJECT
 public:
-    explicit DropArea(View *parent, MainWindowOptions options, bool isMDIWrapper = false);
+    explicit DropArea(int ctx, View *parent, MainWindowOptions options, bool isMDIWrapper = false);
     ~DropArea();
 
     void removeHover();
@@ -92,7 +92,7 @@ public:
     /// Returns the helper dock widget for implementing DockWidgetOption_MDINestable.
     Core::DockWidget *mdiDockWidgetWrapper() const;
 
-    static Core::Group *createCentralGroup(MainWindowOptions options);
+    static Core::Group *createCentralGroup(int ctx, MainWindowOptions options);
 
     /**
      * @brief Adds a widget to this MultiSplitter.

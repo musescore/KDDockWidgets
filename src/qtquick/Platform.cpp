@@ -14,6 +14,7 @@
 #include "kddockwidgets/KDDockWidgets.h"
 #include "kddockwidgets/qtcommon/View.h"
 #include "Config.h"
+#include "QmlConfig.h"
 #include "QmlTypes.h"
 
 #include "Helpers_p.h"
@@ -185,7 +186,7 @@ void Platform::setQmlEngine(QQmlEngine *qmlEngine)
 
     m_qmlEngine = qmlEngine;
 
-    auto dr = DockRegistry::self(); // make sure our QML types are registered
+    auto dr = DockRegistry::self(ctx()); // make sure our QML types are registered
     QQmlContext *context = qmlEngine->rootContext();
     context->setContextProperty(QStringLiteral("_kddwHelpers"), m_qquickHelpers);
     context->setContextProperty(QStringLiteral("_kddwDockRegistry"), dr);
@@ -210,7 +211,7 @@ void Platform::updateViewFactoryContextProperty()
         return;
 
     m_qmlEngine->rootContext()->setContextProperty(QStringLiteral("_kddw_widgetFactory"),
-                                                   Config::self().viewFactory());
+                                                   Config::self(ctx()).viewFactory());
 }
 
 void Platform::onViewFactoryChanged()
@@ -220,7 +221,12 @@ void Platform::onViewFactoryChanged()
 
 ViewFactory *Platform::viewFactory() const
 {
-    return static_cast<ViewFactory *>(Config::self().viewFactory());
+    return static_cast<ViewFactory *>(Config::self(ctx()).viewFactory());
+}
+
+int Platform::ctx() const
+{
+    return ctxForEngine(m_qmlEngine);
 }
 
 Core::View *Platform::createView(Core::Controller *controller, Core::View *parent) const

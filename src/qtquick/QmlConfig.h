@@ -15,7 +15,19 @@
 
 #include <QQuickItem>
 
+QT_BEGIN_NAMESPACE
+class QQmlEngine;
+QT_END_NAMESPACE
+
 namespace KDDockWidgets {
+
+/// @brief Returns the KDDockWidgets ctx associated with @p engine, or 0 if unset.
+/// The ctx is stored on the engine itself (as a dynamic property), so each
+/// QQmlEngine carries its own ctx — no process-wide singleton.
+DOCKS_EXPORT int ctxForEngine(QQmlEngine *engine);
+
+/// @brief Associates @p ctx with @p engine. Called from QmlConfig::setCtx.
+DOCKS_EXPORT void setCtxForEngine(QQmlEngine *engine, int ctx);
 
 class DOCKS_EXPORT QmlConfig : public QObject
 {
@@ -23,6 +35,7 @@ class DOCKS_EXPORT QmlConfig : public QObject
     QML_NAMED_ELEMENT(Config)
     QML_SINGLETON
     Q_PROPERTY(QJSValue dockWidgetFactoryFunc READ dockWidgetFactoryFunc WRITE setDockWidgetFactoryFunc NOTIFY dockWidgetFactoryFuncChanged)
+    Q_PROPERTY(int ctx READ ctx WRITE setCtx NOTIFY ctxChanged)
 public:
     QmlConfig();
     ~QmlConfig() override;
@@ -30,17 +43,16 @@ public:
     QJSValue dockWidgetFactoryFunc() const;
     void setDockWidgetFactoryFunc(const QJSValue &func);
 
-    static QmlConfig *instance()
-    {
-        return s_qmlConfigInstance;
-    }
+    int ctx() const;
+    void setCtx(int ctx);
 
 Q_SIGNALS:
     void dockWidgetFactoryFuncChanged();
+    void ctxChanged();
 
 private:
     QJSValue m_dockWidgetFactoryFunc;
-    static QPointer<QmlConfig> s_qmlConfigInstance;
+    int m_ctx = 0;
 };
 
 }

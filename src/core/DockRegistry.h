@@ -64,7 +64,14 @@ public:
     };
     Q_DECLARE_FLAGS(DockByNameFlags, DockByNameFlag)
 
-    static DockRegistry *self();
+    ///@brief Returns the DockRegistry bound to the given context. Owned by ContextData.
+    static DockRegistry *self(int ctx);
+
+    ///@brief Constructs a per-context DockRegistry. Used by ContextData.
+    explicit DockRegistry(int ctx, Core::Object *parent = nullptr);
+
+    int ctx() const { return m_ctx; }
+
     static bool isInitialized();
 
     ~DockRegistry() override;
@@ -237,6 +244,9 @@ public:
 private:
     friend class Core::FocusScope;
     friend class Core::TitleBar;
+
+    const int m_ctx = 0;
+    bool m_isContextDataOwned = false;
 
     static DockRegistry *self(bool create);
 

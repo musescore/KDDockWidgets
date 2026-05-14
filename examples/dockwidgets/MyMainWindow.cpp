@@ -54,7 +54,7 @@ static MyWidget *newMyWidget()
 MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowOptions options,
                            ExampleOptions exampleOptions,
                            const QString &affinityName, QWidget *parent)
-    : KDDockWidgets::QtWidgets::MainWindow(uniqueName, options, parent)
+    : KDDockWidgets::QtWidgets::MainWindow(0, uniqueName, options, parent)
     , m_exampleOptions(exampleOptions)
 {
     auto menubar = menuBar();
@@ -73,7 +73,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
         count++;
         auto w = newMyWidget();
         w->setGeometry(100, 100, 400, 400);
-        auto dock = new KDDockWidgets::QtWidgets::DockWidget(
+        auto dock = new KDDockWidgets::QtWidgets::DockWidget(0, 
             QStringLiteral("new dock %1").arg(count));
         dock->setWidget(w);
         dock->resize(QSize(600, 600));
@@ -82,7 +82,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
 
     auto saveLayoutAction = fileMenu->addAction(QStringLiteral("Save Layout"));
     connect(saveLayoutAction, &QAction::triggered, this, [] {
-        KDDockWidgets::LayoutSaver saver;
+        KDDockWidgets::LayoutSaver saver(0);
         const bool result = saver.saveToFile(QStringLiteral("mylayout.json"));
         qDebug() << "Saving layout to disk. Result=" << result;
     });
@@ -93,7 +93,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
         if (m_exampleOptions & ExampleOption::RestoreIsRelative)
             options |= KDDockWidgets::RestoreOption_RelativeToMainWindow;
 
-        KDDockWidgets::LayoutSaver saver(options);
+        KDDockWidgets::LayoutSaver saver(0,options);
         saver.restoreFromFile(QStringLiteral("mylayout.json"));
     });
 
@@ -114,7 +114,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
     toggleDropIndicatorSupport->setCheckable(true);
     toggleDropIndicatorSupport->setChecked(true);
     connect(toggleDropIndicatorSupport, &QAction::toggled, this, [](bool checked) {
-        KDDockWidgets::Config::self().setDropIndicatorsInhibited(!checked);
+        KDDockWidgets::Config::self(0).setDropIndicatorsInhibited(!checked);
     });
 
     // for debug purposes only:
@@ -133,7 +133,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
 
     if (m_exampleOptions & ExampleOption::CtrlKeyFiltersDropIndicators) {
         /// Drop indicators will only be visible when ctrl is pressed
-        KDDockWidgets::Config::self().setDropIndicatorsInhibited(true);
+        KDDockWidgets::Config::self(0).setDropIndicatorsInhibited(true);
         qGuiApp->installEventFilter(new CtrlKeyEventFilter(this));
     }
 }
@@ -196,7 +196,7 @@ KDDockWidgets::QtWidgets::DockWidget *MyMainWindow::newDockWidget()
     if ((count == 6 || count == 7 || count == 8) && (m_exampleOptions & ExampleOption::DockWidgets678DontCloseBeforeRestore))
         layoutSaverOptions |= KDDockWidgets::LayoutSaverOption::Skip;
 
-    auto dock = new KDDockWidgets::QtWidgets::DockWidget(
+    auto dock = new KDDockWidgets::QtWidgets::DockWidget(0, 
         QStringLiteral("DockWidget #%1").arg(count), options, layoutSaverOptions);
     dock->setAffinities(affinities()); // optional, just to show the feature. Pass -mi to the
                                        // example to see incompatible dock widgets
@@ -211,7 +211,7 @@ KDDockWidgets::QtWidgets::DockWidget *MyMainWindow::newDockWidget()
             myWidget->setMaximumSize(200, 200);
             auto button = new QPushButton("dump debug info", myWidget);
             connect(button, &QPushButton::clicked, this, [myWidget] {
-                KDDockWidgets::Config::self().printDebug();
+                KDDockWidgets::Config::self(0).printDebug();
 
                 qDebug() << "Widget: " << myWidget->geometry() << myWidget->minimumSize() << myWidget->minimumSizeHint() << myWidget->maximumSize() << myWidget->sizeHint() << myWidget->window();
 

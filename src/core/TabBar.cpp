@@ -31,10 +31,11 @@
 using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
-Core::TabBar::TabBar(Stack *stack)
-    : Controller(ViewType::TabBar, Config::self().viewFactory()->createTabBar(this, stack->view()))
-    , Draggable(view())
+Core::TabBar::TabBar(int ctx, Stack *stack)
+    : Controller(ViewType::TabBar, Config::self(ctx).viewFactory()->createTabBar(this, stack->view()))
+    , Draggable(ctx, view())
     , d(new Private(stack))
+    , m_ctx(ctx)
 {
     view()->init();
     if (auto tvi = dynamic_cast<Core::TabBarViewInterface *>(view()))
@@ -48,7 +49,7 @@ Core::TabBar::~TabBar()
 
 bool Core::TabBar::tabsAreMovable() const
 {
-    return Config::self().flags() & Config::Flag_AllowReorderTabs;
+    return Config::self(m_ctx).flags() & Config::Flag_AllowReorderTabs;
 }
 
 bool Core::TabBar::dragCanStart(Point pressPos, Point pos) const
@@ -74,7 +75,7 @@ bool Core::TabBar::dragCanStart(Point pressPos, Point pos) const
     const int deltaX = std::abs(pos.x() - pressPos.x());
     const int deltaY = std::abs(pos.y() - pressPos.y());
 
-    const int startDragDistance = Platform::instance()->startDragDistance();
+    const int startDragDistance = Platform::instance()->startDragDistance(m_ctx);
 
     if (deltaY > 5 * startDragDistance) {
         // Moving up or down too much results in a detach. No tab re-ordering allowed.
@@ -168,8 +169,8 @@ std::unique_ptr<WindowBeingDragged> Core::TabBar::makeWindow()
     d->m_lastPressedDockWidget = nullptr;
 
     const bool hideTitleBarWhenTabsVisible =
-        Config::self().flags() & Config::Flag_HideTitleBarWhenTabsVisible;
-    const bool alwaysShowTabs = Config::self().flags() & Config::Flag_AlwaysShowTabs;
+        Config::self(m_ctx).flags() & Config::Flag_HideTitleBarWhenTabsVisible;
+    const bool alwaysShowTabs = Config::self(m_ctx).flags() & Config::Flag_AlwaysShowTabs;
 
     if (hideTitleBarWhenTabsVisible) {
         if (dock) {
@@ -214,7 +215,7 @@ void Core::TabBar::onMousePress(Point localPos)
 {
     d->m_lastPressedDockWidget = dockWidgetAt(localPos);
     Group *group = this->group();
-    if (Config::self().flags() & Config::Flag_TitleBarIsFocusable) {
+    if (Config::self(m_ctx).flags() & Config::Flag_TitleBarIsFocusable) {
         // User clicked on a tab which was already focused
         // A tab changing also counts as a change of scope
         group->FocusScope::focus(Qt::MouseFocusReason);
@@ -223,7 +224,7 @@ void Core::TabBar::onMousePress(Point localPos)
 
 bool Core::TabBar::onMouseDoubleClick(Point localPos)
 {
-    if (Config::self().flags() & Config::Flag_DisableDoubleClick) {
+    if (Config::self(m_ctx).flags() & Config::Flag_DisableDoubleClick) {
         return false;
     } else if (DockWidget *dw = dockWidgetAt(localPos)) {
         dw->setFloating(!dw->isFloating());

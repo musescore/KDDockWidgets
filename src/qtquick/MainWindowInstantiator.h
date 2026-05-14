@@ -41,6 +41,7 @@ class DOCKS_EXPORT MainWindowInstantiator : public QQuickItem
 {
     Q_OBJECT
     QML_NAMED_ELEMENT(DockingArea)
+    Q_PROPERTY(int ctx READ ctx WRITE setCtx NOTIFY ctxChanged)
     Q_PROPERTY(QString uniqueName READ uniqueName WRITE setUniqueName NOTIFY uniqueNameChanged)
     Q_PROPERTY(QString persistentCentralItemFileName READ persistentCentralItemFileName WRITE setPersistentCentralItemFileName NOTIFY uniqueNameChanged)
     Q_PROPERTY(KDDockWidgets::MainWindowOptions options READ options WRITE setOptions NOTIFY
@@ -50,6 +51,9 @@ class DOCKS_EXPORT MainWindowInstantiator : public QQuickItem
 public:
     ///@brief ctor, called by QML engine
     MainWindowInstantiator();
+
+    int ctx() const;
+    void setCtx(int);
 
     QString uniqueName() const;
     void setUniqueName(const QString &);
@@ -89,12 +93,14 @@ protected:
     void componentComplete() override;
 
 Q_SIGNALS:
+    void ctxChanged();
     void uniqueNameChanged();
     void optionsChanged();
     void affinitiesChanged();
     void persistentCentralItemFileNameChanged();
 
 private:
+    int m_ctx = 0;
     QString m_uniqueName;
     QString m_persistentWidgetFileName;
     Core::MainWindow *m_mainWindow = nullptr;

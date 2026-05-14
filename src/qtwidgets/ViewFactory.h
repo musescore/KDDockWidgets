@@ -54,7 +54,8 @@ class DOCKS_EXPORT ViewFactory : public Core::ViewFactory
 {
     Q_OBJECT
 public:
-    ViewFactory() = default;
+    explicit ViewFactory(int ctx = 0)
+        : Core::ViewFactory(ctx) {}
     ~ViewFactory() override;
 
     Core::View *createDockWidget(const QString &uniqueName, DockWidgetOptions = {},

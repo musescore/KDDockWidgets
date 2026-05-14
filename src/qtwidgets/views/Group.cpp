@@ -152,7 +152,7 @@ QRect Group::dragRect() const
 {
     QRect rect;
 
-    if (Config::self().flags() & Config::Flag_HideTitleBarWhenTabsVisible) {
+    if (Config::self(m_group->ctx()).flags() & Config::Flag_HideTitleBarWhenTabsVisible) {
         auto tabBar = qobject_cast<QTabBar *>(asQWidget(m_group->tabBar()));
         rect.setHeight(tabBar->height());
         rect.setWidth(QWidget::width() - tabBar->width());

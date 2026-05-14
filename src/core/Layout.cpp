@@ -33,9 +33,10 @@ using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
 
-Layout::Layout(ViewType type, View *view)
+Layout::Layout(int ctx, ViewType type, View *view)
     : Controller(type, view)
     , d(new Private(this))
+    , m_ctx(ctx)
 {
     assert(view);
     view->d->layoutInvalidated.connect([this] { updateSizeConstraints(); });
@@ -151,7 +152,7 @@ void Layout::dumpLayout() const
 void Layout::restorePlaceholder(Core::DockWidget *dw, Core::Item *item, int tabIndex)
 {
     if (item->isPlaceholder()) {
-        auto newGroup = new Core::Group(view());
+        auto newGroup = new Core::Group(m_ctx, view());
         item->restore(newGroup->asLayoutingGuest());
     }
 
@@ -163,7 +164,7 @@ void Layout::restorePlaceholder(Core::DockWidget *dw, Core::Item *item, int tabI
         KDDW_ERROR("Layout::restorePlaceholder: Trying to use a group that's being deleted");
     }
 
-    if (auto tabIndexFunc = Config::self().dockWidgetTabIndexOverrideFunc()) {
+    if (auto tabIndexFunc = Config::self(m_ctx).dockWidgetTabIndexOverrideFunc()) {
         // The user wishes to control the tabIndex himself
         group->insertWidget(dw, tabIndexFunc(dw, group, tabIndex));
     } else {
@@ -299,7 +300,7 @@ bool Layout::deserialize(const LayoutSaver::MultiSplitter &l)
     std::unordered_map<QString, LayoutingGuest *> groups;
     for (const auto &it : l.groups) {
         const LayoutSaver::Group &group = it.second;
-        Core::Group *f = Core::Group::deserialize(group);
+        Core::Group *f = Core::Group::deserialize(m_ctx, group);
         if (!f)
             return false;
 

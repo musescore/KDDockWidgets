@@ -14,6 +14,7 @@
 #include "core/DockWidget_p.h"
 #include "ViewFactory.h"
 #include "Config.h"
+#include "ContextData.h"
 #include "Platform.h"
 
 #include <kdbindings/signal.h>
@@ -26,6 +27,7 @@ using namespace KDDockWidgets::QtQuick;
 class DockWidgetInstantiator::Private
 {
 public:
+    int m_ctx = 0;
     std::optional<bool> m_isFloating;
     QString m_uniqueName;
     QString m_sourceFilename;
@@ -60,6 +62,19 @@ DockWidgetInstantiator::DockWidgetInstantiator()
 DockWidgetInstantiator::~DockWidgetInstantiator()
 {
     delete d;
+}
+
+int DockWidgetInstantiator::ctx() const
+{
+    return d->m_ctx;
+}
+
+void DockWidgetInstantiator::setCtx(int ctx)
+{
+    if (d->m_ctx == ctx)
+        return;
+    d->m_ctx = ctx;
+    Q_EMIT ctxChanged();
 }
 
 QString DockWidgetInstantiator::uniqueName() const
@@ -292,7 +307,7 @@ void DockWidgetInstantiator::componentComplete()
         return;
     }
 
-    if (DockRegistry::self()->containsDockWidget(d->m_uniqueName)) {
+    if (DockRegistry::self(d->m_ctx)->containsDockWidget(d->m_uniqueName)) {
         // Dock widget already exists. all good.
         return;
     }
@@ -308,7 +323,7 @@ void DockWidgetInstantiator::componentComplete()
         return;
     }
 
-    d->m_dockWidget = ViewFactory::self()
+    d->m_dockWidget = ViewFactory::self(d->m_ctx)
                           ->createDockWidget(d->m_uniqueName, qmlEngine(this), d->m_options)
                           ->asDockWidgetController();
 

@@ -35,7 +35,7 @@ class DebugWindow : public QWidget
 {
     Q_OBJECT
 public:
-    explicit DebugWindow(QWidget *parent = nullptr);
+    explicit DebugWindow(int ctx, QWidget *parent = nullptr);
 
 private:
 #ifdef Q_OS_WIN
@@ -46,6 +46,7 @@ private:
     void repaintWidgetRecursive(QWidget *);
 
     void dumpDockWidgetInfo();
+    const int m_ctx;
     ObjectViewer m_objectViewer;
     QEventLoop *m_isPickingWidget = nullptr;
 

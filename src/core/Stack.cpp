@@ -29,16 +29,16 @@
 using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
-Stack::Stack(Group *group, StackOptions options)
-    : Controller(ViewType::Stack, Config::self().viewFactory()->createStack(this, group->view()))
-    , Draggable(view(),
-                Config::self().flags()
+Stack::Stack(int ctx, Group *group, StackOptions options)
+    : Controller(ViewType::Stack, Config::self(ctx).viewFactory()->createStack(this, group->view()))
+    , Draggable(ctx, view(),
+                Config::self(ctx).flags()
                     & (Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs))
     , d(new Private(group, options, this))
-
+    , m_ctx(ctx)
 {
     // needs to be initialized out of Private(), as tabbar view's init will call into stack's private
-    d->m_tabBar = new TabBar(this);
+    d->m_tabBar = new TabBar(ctx, this);
 
     view()->init();
 }
@@ -125,7 +125,7 @@ std::unique_ptr<WindowBeingDragged> Stack::makeWindow()
 
     const Point globalPoint = view()->mapToGlobal(Point(0, 0));
 
-    auto floatingWindow = new FloatingWindow(d->m_group, {});
+    auto floatingWindow = new FloatingWindow(m_ctx, d->m_group, {});
     r.moveTopLeft(globalPoint);
     floatingWindow->setSuggestedGeometry(r, SuggestedGeometryHint_GeometryIsFromDocked);
     floatingWindow->view()->show();
@@ -163,7 +163,7 @@ bool Stack::onMouseDoubleClick(Point localPos)
     // User clicked the empty space of the tab widget and we don't have title bar
     // We float the entire group.
 
-    if (!(Config::self().flags() & Config::Flag_HideTitleBarWhenTabsVisible)
+    if (!(Config::self(m_ctx).flags() & Config::Flag_HideTitleBarWhenTabsVisible)
         || tabBar()->dockWidgetAt(localPos))
         return false;
 

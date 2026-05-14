@@ -68,7 +68,7 @@ static Display *x11Display()
 static Window::List orderedWindows(bool &ok)
 {
     ok = true;
-    Window::List windows = DockRegistry::self()->topLevels();
+    Window::List windows = DockRegistry::self(0)->topLevels();
     if (windows.isEmpty())
         return {};
 

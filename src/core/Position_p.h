@@ -54,8 +54,12 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS Positions
     KDDW_DELETE_COPY_CTOR(Positions)
 public:
     typedef std::shared_ptr<Positions> Ptr;
-    Positions() = default;
+    explicit Positions(int ctx = 0)
+        : m_ctx(ctx) {}
     ~Positions();
+
+    int ctx() const { return m_ctx; }
+    const int m_ctx = 0;
 
     void deserialize(const LayoutSaver::Position &);
     LayoutSaver::Position serialize() const;
@@ -145,7 +149,7 @@ private:
         explicit ItemRef(KDBindings::ConnectionHandle conn, Core::Item *);
         ~ItemRef();
 
-        bool isInMainWindow() const;
+        bool isInMainWindow(int ctx) const;
 
         Core::ObjectGuard<Core::Item> item;
         KDBindings::ConnectionHandle connection;

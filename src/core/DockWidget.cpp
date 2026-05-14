@@ -52,12 +52,13 @@
 using namespace KDDockWidgets;
 using namespace KDDockWidgets::Core;
 
-DockWidget::DockWidget(View *view, const QString &name, DockWidgetOptions options,
+DockWidget::DockWidget(int ctx, View *view, const QString &name, DockWidgetOptions options,
                        LayoutSaverOptions layoutSaverOptions)
     : Controller(ViewType::DockWidget, view)
     , d(new Private(name, options, layoutSaverOptions, this))
+    , m_ctx(ctx)
 {
-    DockRegistry::self()->registerDockWidget(this);
+    DockRegistry::self(m_ctx)->registerDockWidget(this);
 
     if (name.isEmpty())
         KDDW_ERROR("Name can't be null");
@@ -80,7 +81,7 @@ DockWidget::~DockWidget()
     d->m_windowDeactivatedConnection->disconnect();
 
     safeEmitSignal(d->aboutToDelete, this);
-    DockRegistry::self()->unregisterDockWidget(this);
+    DockRegistry::self(m_ctx)->unregisterDockWidget(this);
     delete d;
 }
 
@@ -102,7 +103,7 @@ void DockWidget::addDockWidgetAsTab(DockWidget *other, const InitialOption &opti
         return;
     }
 
-    if (!DockRegistry::self()->affinitiesMatch(other->affinities(), d->affinities)) {
+    if (!DockRegistry::self(m_ctx)->affinitiesMatch(other->affinities(), d->affinities)) {
         KDDW_ERROR("Refusing to dock widget with incompatible affinity. {} {}", other->affinities(), affinities());
         return;
     }
@@ -158,7 +159,7 @@ void DockWidget::addDockWidgetToContainingWindow(DockWidget *other, Location loc
         return;
     }
 
-    if (!DockRegistry::self()->affinitiesMatch(other->affinities(), d->affinities)) {
+    if (!DockRegistry::self(m_ctx)->affinitiesMatch(other->affinities(), d->affinities)) {
         KDDW_ERROR("Refusing to dock widget with incompatible affinity. {} {}", other->affinities(), affinities());
         return;
     }
@@ -224,7 +225,7 @@ bool DockWidget::setFloating(bool floats)
         return true; // Nothing to do
 
     if (!floats
-        && (Config::self().internalFlags()
+        && (Config::self(m_ctx).internalFlags()
             & Config::InternalFlag_DontShowWhenUnfloatingHiddenWindow)
         && !isVisible()) {
         // Mimics behaviour of QDockWidget, which you might need during porting.
@@ -484,7 +485,7 @@ MainWindow *DockWidget::mainWindow() const
 
 bool DockWidget::isFocused() const
 {
-    return DockRegistry::self()->focusedDockWidget() == this;
+    return DockRegistry::self(m_ctx)->focusedDockWidget() == this;
 }
 
 void DockWidget::setAffinityName(const QString &affinity)
@@ -539,7 +540,7 @@ bool DockWidget::isOverlayed() const
 
 SideBarLocation DockWidget::sideBarLocation() const
 {
-    return DockRegistry::self()->sideBarLocationForDockWidget(this);
+    return DockRegistry::self(m_ctx)->sideBarLocationForDockWidget(this);
 }
 
 bool DockWidget::isInSideBar() const
@@ -557,9 +558,9 @@ Size DockWidget::lastOverlayedSize() const
     return d->m_lastOverlayedSize;
 }
 
-Core::DockWidget *DockWidget::byName(const QString &uniqueName)
+Core::DockWidget *DockWidget::byName(int ctx, const QString &uniqueName)
 {
-    return DockRegistry::self()->dockByName(uniqueName);
+    return DockRegistry::self(ctx)->dockByName(uniqueName);
 }
 
 void DockWidget::setParentView_impl(View *parent)
@@ -618,12 +619,12 @@ Core::FloatingWindow *DockWidget::Private::morphIntoFloatingWindow()
             }
         }
 
-        auto group = new Core::Group();
+        auto group = new Core::Group(q->ctx());
         group->addTab(q);
         geo.setSize(geo.size().boundedTo(group->view()->maxSizeHint()));
         geo.setSize(geo.size().expandedTo(group->view()->minSize()));
         Core::FloatingWindow::ensureRectIsOnScreen(geo);
-        auto floatingWindow = new Core::FloatingWindow(group, geo);
+        auto floatingWindow = new Core::FloatingWindow(q->ctx(), group, geo);
 
         Core::AtomicSanityChecks checks(floatingWindow->dropArea()->rootItem());
         floatingWindow->view()->show();
@@ -717,7 +718,7 @@ DockWidget::Private::~Private()
 
 Point DockWidget::Private::defaultCenterPosForFloating()
 {
-    MainWindow::List mainWindows = DockRegistry::self()->mainwindows();
+    MainWindow::List mainWindows = DockRegistry::self(q->ctx())->mainwindows();
     // We don't care about multiple mainwindows yet. Or, let's just say that the first one is more
     // main than the others
     MainWindow *mw = mainWindows.isEmpty() ? nullptr : mainWindows.constFirst();
@@ -818,11 +819,11 @@ void DockWidget::Private::close()
     if (m_isPersistentCentralDockWidget)
         return;
 
-    m_lastCloseReason = DockRegistry::self()->currentCloseReason();
+    m_lastCloseReason = DockRegistry::self(q->ctx())->currentCloseReason();
     setIsOpen(false);
 
     // If it's overlayed and we're closing, we need to close the overlay
-    if (Core::SideBar *sb = DockRegistry::self()->sideBarForDockWidget(q)) {
+    if (Core::SideBar *sb = DockRegistry::self(q->ctx())->sideBarForDockWidget(q)) {
         auto mainWindow = sb->mainWindow();
         if (mainWindow->overlayedDockWidget() == q) {
             mainWindow->clearSideBarOverlay(/* deleteGroup=*/false);
@@ -845,7 +846,7 @@ void DockWidget::Private::close()
         q->setParentView(nullptr);
         group->removeWidget(q);
 
-        if (Core::SideBar *sb = DockRegistry::self()->sideBarForDockWidget(q)) {
+        if (Core::SideBar *sb = DockRegistry::self(q->ctx())->sideBarForDockWidget(q)) {
             sb->removeDockWidget(q);
         }
     }
@@ -862,7 +863,7 @@ bool DockWidget::Private::restoreToPreviousPosition()
     if (!item)
         return false;
 
-    Layout *layout = DockRegistry::self()->layoutForItem(item);
+    Layout *layout = DockRegistry::self(q->ctx())->layoutForItem(item);
     assert(layout);
     layout->restorePlaceholder(q, item, m_lastPositions->lastTabIndex());
     return true;
@@ -882,7 +883,7 @@ void DockWidget::Private::maybeRestoreToPreviousPosition()
 
     Core::Group *group = this->group();
 
-    if (group && group->view()->equals(DockRegistry::self()->layoutForItem(layoutItem)->view())) {
+    if (group && group->view()->equals(DockRegistry::self(q->ctx())->layoutForItem(layoutItem)->view())) {
         // There's a group already. Means the DockWidget was hidden instead of closed.
         // Nothing to do, the dock widget will simply be shown
         return;
@@ -930,12 +931,12 @@ void DockWidget::onResize(Size)
     }
 }
 
-Core::DockWidget *DockWidget::deserialize(const LayoutSaver::DockWidget::Ptr &saved)
+Core::DockWidget *DockWidget::deserialize(int ctx, const LayoutSaver::DockWidget::Ptr &saved)
 {
-    if (saved->skipsRestore())
+    if (saved->skipsRestore(ctx))
         return nullptr;
 
-    auto dr = DockRegistry::self();
+    auto dr = DockRegistry::self(ctx);
     DockWidget *dw =
         dr->dockByName(saved->uniqueName, DockRegistry::DockByNameFlags(DockRegistry::DockByNameFlag::CreateIfNotFound) | DockRegistry::DockByNameFlag::SilentIfNotFound);
     if (dw) {
@@ -1055,8 +1056,8 @@ DockWidget::Private::Private(const QString &dockName, DockWidgetOptions options_
     , q(qq)
     , options(options_)
     , layoutSaverOptions(layoutSaverOptions_)
-    , toggleAction(Config::self().viewFactory()->createAction(q, "toggle"))
-    , floatAction(Config::self().viewFactory()->createAction(q, "float"))
+    , toggleAction(Config::self(q->ctx()).viewFactory()->createAction(q, "toggle"))
+    , floatAction(Config::self(q->ctx()).viewFactory()->createAction(q, "float"))
 {
     m_toggleActionConnection = toggleAction->d->toggled.connect(
         [this](bool enabled) {
@@ -1082,7 +1083,7 @@ DockWidget::Private::Private(const QString &dockName, DockWidgetOptions options_
 
         // When floating, we remove from the sidebar
         if (checked && q->isOpen()) {
-            if (Core::SideBar *sb = DockRegistry::self()->sideBarForDockWidget(q)) {
+            if (Core::SideBar *sb = DockRegistry::self(q->ctx())->sideBarForDockWidget(q)) {
                 sb->mainWindow()->clearSideBarOverlay(/* deleteGroup=*/false);
                 sb->removeDockWidget(q);
             }
@@ -1262,7 +1263,7 @@ Draggable *draggableForDockWidget(DockWidget *dw, bool singleTab)
 
 bool DockWidget::startDragging(bool singleTab)
 {
-    auto dc = DragController::instance();
+    auto dc = DragController::instance(m_ctx);
     if (dc->isDragging()) {
         KDDW_WARN("DockWidget::startDragging: Dragging already ongoing");
         return false;

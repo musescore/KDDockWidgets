@@ -256,7 +256,7 @@ void TestQtWidgets::tst_designerMainWindow()
     // solution is for KDDW users to call manualInit() later
 
     EnsureTopLevelsDeleted e;
-    QtWidgets::MainWindow mw("mw1", MainWindowOptions(MainWindowOption_HasCentralWidget) | MainWindowOption_ManualInit);
+    QtWidgets::MainWindow mw(0, "mw1", MainWindowOptions(MainWindowOption_HasCentralWidget) | MainWindowOption_ManualInit);
     auto dock1 = createDockWidget("dock1", new QWidget());
     mw.show();
 
@@ -346,7 +346,7 @@ void TestQtWidgets::tst_dockableMainWindows()
     auto dock1 = createDockWidget("dock1", new QPushButton("foo"));
     m1->addDockWidget(dock1, Location_OnTop);
 
-    auto m2 = new KDDockWidgets::QtWidgets::MainWindow("mainwindow-dockable");
+    auto m2 = new KDDockWidgets::QtWidgets::MainWindow(0, "mainwindow-dockable");
     auto m2Container = createDockWidget("mainwindow-dw", ( View * )m2);
     auto menubar = m2->menuBar();
     menubar->addMenu("File");
@@ -416,7 +416,7 @@ void TestQtWidgets::tst_mdi_mixed_with_docking()
 
     m->addDockWidget(dock1, Location_OnBottom);
 
-    auto mdiArea = new QtWidgets::MDIArea();
+    auto mdiArea = new QtWidgets::MDIArea(0);
     m->setPersistentCentralView(QtWidgets::ViewWrapper::create(mdiArea));
 
     auto mdiWidget1 = createDockWidget("mdi1", new QPushButton("mdi1"));
@@ -428,7 +428,7 @@ void TestQtWidgets::tst_mdi_mixed_with_docking()
 
     // We don't support LayoutSaver with mdi yet, but it shouldn't crash
     // so test it as well
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     saver.serializeLayout();
 
     Core::Group *groupMDI1 = mdiWidget1->d->group();
@@ -468,7 +468,7 @@ void TestQtWidgets::tst_mdi_mixed_with_docking2()
 
     m->addDockWidget(dock1, Location_OnBottom);
 
-    auto mdiArea = new QtWidgets::MDIArea();
+    auto mdiArea = new QtWidgets::MDIArea(0);
 
     m->setPersistentCentralView(QtWidgets::ViewWrapper::create(mdiArea));
 
@@ -641,7 +641,7 @@ void TestQtWidgets::tst_mdi_mixed_with_docking_setMDISize()
 
     m->addDockWidget(dock1, Location_OnBottom);
 
-    auto mdiArea = new QtWidgets::MDIArea();
+    auto mdiArea = new QtWidgets::MDIArea(0);
     m->setPersistentCentralView(QtWidgets::ViewWrapper::create(mdiArea));
 
     auto createSheet = [](int id) -> Core::DockWidget * {
@@ -681,7 +681,7 @@ void TestQtWidgets::tst_floatingWindowDeleted()
     {
     public:
         MyMainWindow()
-            : KDDockWidgets::QtWidgets::MainWindow("tst_floatingWindowDeleted",
+            : KDDockWidgets::QtWidgets::MainWindow(0, "tst_floatingWindowDeleted",
                                                    MainWindowOption_None)
         {
             auto dock1 = newDockWidget(QStringLiteral("DockWidget #1"));
@@ -787,7 +787,7 @@ void TestQtWidgets::tst_restoreSideBar()
     QByteArray beforeSideBarSerialized; // serialization without any sidebar visible
 
     {
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         EnsureTopLevelsDeleted e;
         KDDockWidgets::Config::self().setFlags(KDDockWidgets::Config::Flag_AutoHideSupport);
         auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW1");
@@ -821,7 +821,7 @@ void TestQtWidgets::tst_restoreSideBar()
     QVERIFY(!dw1->isFloating());
     QVERIFY(dw1->isInMainWindow());
 
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     restorer.restoreLayout(serialized);
 
     QVERIFY(!dw1->isOverlayed());
@@ -847,14 +847,14 @@ void TestQtWidgets::tst_restoreSideBar2()
     EnsureTopLevelsDeleted e;
 
     KDDockWidgets::Config::self().setFlags(KDDockWidgets::Config::Flag_AutoHideSupport);
-    KDDockWidgets::QtWidgets::MainWindow m1("MyMainWindow");
+    KDDockWidgets::QtWidgets::MainWindow m1(0, "MyMainWindow");
     m1.resize(QSize(1197, 1197));
 
-    auto dw1 = new KDDockWidgets::QtWidgets::DockWidget(
+    auto dw1 = new KDDockWidgets::QtWidgets::DockWidget(0, 
         QStringLiteral("DockWidget #0"));
-    auto dw2 = new KDDockWidgets::QtWidgets::DockWidget(
+    auto dw2 = new KDDockWidgets::QtWidgets::DockWidget(0, 
         QStringLiteral("DockWidget #1"));
-    auto dw3 = new KDDockWidgets::QtWidgets::DockWidget(
+    auto dw3 = new KDDockWidgets::QtWidgets::DockWidget(0, 
         QStringLiteral("DockWidget #2"));
     m1.addDockWidget(dw1, KDDockWidgets::Location_OnTop);
     m1.addDockWidget(dw2, KDDockWidgets::Location_OnRight, dw1);
@@ -864,7 +864,7 @@ void TestQtWidgets::tst_restoreSideBar2()
     QCOMPARE(layout->size().width(), layout->layoutSize().width());
     QCOMPARE(layout->size().height(), layout->layoutSize().height());
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     saver.restoreFromFile(":/layouts/sidebar_restore.json");
 
     QVERIFY(dw1->isOpen());
@@ -1401,7 +1401,7 @@ void TestQtWidgets::tst_restoreEmbeddedMainWindow()
     const QSize originalSize = window->size();
     window->move(originalPos);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QByteArray saved = saver.serializeLayout();
     QVERIFY(!saved.isEmpty());
 
@@ -1469,14 +1469,14 @@ void TestQtWidgets::tst_restoreWithRemapping()
     auto dock2 = createDockWidget("2", new QPushButton("2"));
     m->addDockWidget(dock2, Location_OnRight);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     savedState = saver.serializeLayout();
 
     dock1->setUniqueName("2");
     dock2->setUniqueName("1");
 
     // 2. Restore the dock widgets via factory
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     restorer.restoreLayout(savedState);
 
     // dock 1 is now on the right of dock 2
@@ -1490,7 +1490,7 @@ void TestQtWidgets::tst_restoreResizesLayout()
     auto dock1 = createDockWidget("1", new QPushButton("1"));
     m->addDockWidget(dock1, Location_OnLeft);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.saveToFile("layout_tst_restoreResizesLayout.json"));
 
     // Now resize the window, and then restore. The layout should have the new size
@@ -1499,7 +1499,7 @@ void TestQtWidgets::tst_restoreResizesLayout()
     m->view()->resize(QSize(1050, 1050));
     QCOMPARE(m->size(), QSize(1050, 1050));
 
-    LayoutSaver restorer(RestoreOption_RelativeToMainWindow);
+    LayoutSaver restorer(0,0, RestoreOption_RelativeToMainWindow);
     QVERIFY(restorer.restoreFromFile("layout_tst_restoreResizesLayout.json"));
     QVERIFY(layout->checkSanity());
 
@@ -1518,7 +1518,7 @@ void TestQtWidgets::tst_restoreNonRelativeFloatingWindowGeometry()
     // Also test that invisible dock doesn't change size
     auto dock2 = createDockWidget("2", new QPushButton("2"), {}, {}, /*show=*/false);
 
-    LayoutSaver saver(RestoreOption_RelativeToMainWindow);
+    LayoutSaver saver(0,RestoreOption_RelativeToMainWindow);
     saver.dptr()->m_restoreOptions.setFlag(InternalRestoreOption::RelativeFloatingWindowGeometry,
                                            false);
 
@@ -1858,7 +1858,7 @@ void TestQtWidgets::tst_restoreFloatingMaximizedState()
 
     QCOMPARE(dock1->floatingWindow()->view()->window()->windowState(), WindowState::Maximized);
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     saver.restoreLayout(saved);
@@ -1959,7 +1959,7 @@ void TestQtWidgets::tst_deleteOnClose()
     m->addDockWidget(dock1, Location_OnLeft);
     m->moveToSideBar(dock1);
     m->overlayOnSideBar(dock1);
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     QVERIFY(dock1->isVisible());
@@ -1978,10 +1978,10 @@ void TestQtWidgets::tstCloseNestedMdi()
     auto m = createMainWindow(QSize(1000, 500), MainWindowOption_HasCentralWidget);
     ObjectGuard<Core::MainWindow> p = m.get();
 
-    auto mdi = new QtWidgets::MDIArea();
+    auto mdi = new QtWidgets::MDIArea(0);
     m->setPersistentCentralView(mdi->asWrapper());
 
-    auto dock1 = new QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
     dock1->setWidget(new QPushButton("1"));
 
     mdi->addDockWidget(dock1, {});
@@ -1996,15 +1996,15 @@ void TestQtWidgets::tstCloseNestedMDIPropagates()
     auto m = createMainWindow(QSize(1000, 500), MainWindowOption_HasCentralWidget);
     ObjectGuard<Core::MainWindow> p = m.get();
 
-    auto mdi = new QtWidgets::MDIArea();
+    auto mdi = new QtWidgets::MDIArea(0);
     m->setPersistentCentralView(mdi->asWrapper());
 
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
     auto nonClosableWidget = Platform::instance()->tests_createNonClosableView();
     dock1->dockWidget()->setGuestView(nonClosableWidget->asWrapper());
     mdi->addDockWidget(dock1, {});
 
-    auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock2"));
+    auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock2"));
     auto nonClosableWidget2 = Platform::instance()->tests_createNonClosableView();
     dock2->dockWidget()->setGuestView(nonClosableWidget2->asWrapper());
     dock2->open();
@@ -2124,14 +2124,14 @@ void TestQtWidgets::tst_restoreWithIncompleteFactory()
         if (name.contains(QStringLiteral("centralDockWidget")))
             return nullptr;
 
-        auto w = new KDDockWidgets::QtWidgets::DockWidget(name);
+        auto w = new KDDockWidgets::QtWidgets::DockWidget(0, name);
         w->setWidget(new QWidget());
         return w->asDockWidgetController();
     });
 
     auto m = createMainWindow(QSize(500, 500), MainWindowOption_None, "MainWindow1");
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     saver.restoreFromFile(":/layouts/restoreWithIncompleteFactory.json");
 
     auto layout = m->multiSplitter();
@@ -2211,7 +2211,7 @@ void TestQtWidgets::tst_userData()
         QCOMPARE(dock1->userData(), userData1);
         QCOMPARE(dock2->userData(), userData2);
 
-        LayoutSaver saver;
+        LayoutSaver saver(0);
         saved = saver.serializeLayout();
     }
 
@@ -2224,7 +2224,7 @@ void TestQtWidgets::tst_userData()
     auto dock1 = createDockWidget("dock1");
     auto dock2 = createDockWidget("dock2");
 
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
 
     QVERIFY(restorer.restoreLayout(saved));
     QCOMPARE(dock1->userData(), userData1);
@@ -2236,7 +2236,7 @@ void TestQtWidgets::tst_standaloneTitleBar()
 {
     QWidget window;
 
-    QtWidgets::TitleBar titleBar(&window);
+    QtWidgets::TitleBar titleBar(0, &window);
     titleBar.asTitleBarController()->setTitle("some title");
 
     auto lay = new QVBoxLayout(&window);
@@ -2254,7 +2254,7 @@ void TestQtWidgets::tst_titleBarTitle()
 {
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW1");
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
     m1->addDockWidget(dock1->asDockWidgetController(), Location_OnBottom);
 
     auto tb = dock1->actualTitleBar();
@@ -2267,7 +2267,7 @@ void TestQtWidgets::tst_titleBarTitle()
 
 void TestQtWidgets::tst_widgetAddQAction()
 {
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
 
     QWidget w;
     w.addAction(dock1->toggleAction());
@@ -2280,8 +2280,8 @@ void TestQtWidgets::tst_currentTabChanged()
     // Tests that QtWidgets::DockWidget::isCurrentTabConnection is emitted
 
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW1");
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
-    auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock2"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
+    auto dock2 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock2"));
 
     int count1 = 0;
     int count2 = 0;
@@ -2396,8 +2396,8 @@ void TestQtWidgets::tst_nestedMainWindowSaveRestore()
     auto nestedMainWindow2 = createMainWindow(QSize(500, 500), MainWindowOption_None, "MW1.2");
     nestedMainWindow2->setAffinities({ "foo2" });
 
-    auto containerDock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested MainWindow Dock container1"));
-    auto containerDock2 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested MainWindow Dock container2"));
+    auto containerDock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested MainWindow Dock container1"));
+    auto containerDock2 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested MainWindow Dock container2"));
     auto nestedMainWindowQWidget1 = static_cast<QMainWindow *>(QtCommon::View_qt::asQWidget(nestedMainWindow1->view()));
     auto nestedMainWindowQWidget2 = static_cast<QMainWindow *>(QtCommon::View_qt::asQWidget(nestedMainWindow2->view()));
 
@@ -2423,7 +2423,7 @@ void TestQtWidgets::tst_nestedMainWindowSaveRestore()
     containerDock1->addDockWidgetAsTab(containerDock2);
     containerDock1->setAsCurrentTab();
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(saver.restoreLayout(saver.serializeLayout()));
     QVERIFY(mainWindow->isVisible());
 }
@@ -2439,12 +2439,12 @@ void TestQtWidgets::tst_nestedMainWindowFloatButton()
     auto nestedMainWindow = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW2");
     mainWindow->setObjectName("root main window");
 
-    auto containerDock = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested MainWindow Dock container"));
+    auto containerDock = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested MainWindow Dock container"));
     auto nestedMainWindowQWidget = static_cast<QMainWindow *>(QtCommon::View_qt::asQWidget(nestedMainWindow->view()));
     containerDock->setWidget(nestedMainWindowQWidget);
     mainWindow->addDockWidget(containerDock->asDockWidgetController(), Location_OnBottom);
 
-    auto nestedDock = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested Dock"));
+    auto nestedDock = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested Dock"));
     nestedMainWindow->addDockWidget(nestedDock->asDockWidgetController(), Location_OnBottom);
     nestedMainWindowQWidget->menuBar()->addMenu("Inner menu");
     nestedMainWindowQWidget->setObjectName("nested main window");
@@ -2469,12 +2469,12 @@ void TestQtWidgets::tst_nestedMainWindowToggle()
     auto nestedMainWindow = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW2");
     mainWindow->setObjectName("root main window");
 
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested MainWindow Dock container"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested MainWindow Dock container"));
     auto nestedMainWindowQWidget = static_cast<QMainWindow *>(QtCommon::View_qt::asQWidget(nestedMainWindow->view()));
     dock1->setWidget(nestedMainWindowQWidget);
     mainWindow->addDockWidget(dock1->asDockWidgetController(), Location_OnBottom);
 
-    auto nestedDock = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested Dock"));
+    auto nestedDock = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested Dock"));
     nestedMainWindow->addDockWidget(nestedDock->asDockWidgetController(), Location_OnBottom);
     nestedMainWindowQWidget->menuBar()->addMenu("Just a visual cue, to notice the nesting");
     nestedMainWindowQWidget->setObjectName("nested main window");
@@ -2507,7 +2507,7 @@ void TestQtWidgets::tstQGraphicsProxyWidget()
     // Tests that using a QGraphicsProxyWidget doesn't crash
 
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "MW1");
-    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
     m1->addDockWidget(dock1->asDockWidgetController(), Location_OnBottom);
 
     auto qgv = new QGraphicsView();
@@ -2534,20 +2534,20 @@ void TestQtWidgets::tst_focusBetweenTabs()
     KDDockWidgets::Config::self().setFlags(KDDockWidgets::Config::Flag_TitleBarIsFocusable);
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_None, "mw1");
 
-    auto floatingDock = new QtWidgets::DockWidget(QStringLiteral("floatingDock"));
+    auto floatingDock = new QtWidgets::DockWidget(0, QStringLiteral("floatingDock"));
     auto leFloating = new QLineEdit("floating");
     floatingDock->setWidget(leFloating);
     floatingDock->show();
 
-    auto dock1 = new QtWidgets::DockWidget(QStringLiteral("MyDock1"));
+    auto dock1 = new QtWidgets::DockWidget(0, QStringLiteral("MyDock1"));
     auto le1 = new QLineEdit("text1");
     dock1->setWidget(le1);
 
-    auto dock2 = new QtWidgets::DockWidget(QStringLiteral("MyDock2"));
+    auto dock2 = new QtWidgets::DockWidget(0, QStringLiteral("MyDock2"));
     auto le2 = new QLineEdit("text2");
     dock2->setWidget(le2);
 
-    auto dock3 = new QtWidgets::DockWidget(QStringLiteral("MyDock3"));
+    auto dock3 = new QtWidgets::DockWidget(0, QStringLiteral("MyDock3"));
     auto le3 = new QLineEdit("text3");
     dock3->setWidget(le3);
 
@@ -2607,12 +2607,12 @@ void TestQtWidgets::addDockWidgetToSide()
     KDDockWidgets::Config::self().setFlags(KDDockWidgets::Config::Flag_TitleBarIsFocusable);
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-    auto d1 = new QtWidgets::DockWidget("d1");
-    auto d2 = new QtWidgets::DockWidget("d2");
-    auto d3 = new QtWidgets::DockWidget("d3");
-    auto d4 = new QtWidgets::DockWidget("d4");
-    auto dTop = new QtWidgets::DockWidget("dTop");
-    auto dTop2 = new QtWidgets::DockWidget("dTop2");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
+    auto d2 = new QtWidgets::DockWidget(0, "d2");
+    auto d3 = new QtWidgets::DockWidget(0, "d3");
+    auto d4 = new QtWidgets::DockWidget(0, "d4");
+    auto dTop = new QtWidgets::DockWidget(0, "dTop");
+    auto dTop2 = new QtWidgets::DockWidget(0, "dTop2");
     QVERIFY(!d1->isOpen());
     QVERIFY(!d1->toggleAction()->isChecked());
     m1->addDockWidgetToSide(d1->asDockWidgetController(), KDDockWidgets::Location_OnLeft);
@@ -2658,8 +2658,8 @@ void TestQtWidgets::addDockWidgetToSide2()
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-    auto d1 = new QtWidgets::DockWidget("d1");
-    auto d2 = new QtWidgets::DockWidget("d2");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
+    auto d2 = new QtWidgets::DockWidget(0, "d2");
 
     QVERIFY(!d1->isOpen());
     QVERIFY(!d1->toggleAction()->isChecked());
@@ -2682,8 +2682,8 @@ void TestQtWidgets::addDockWidgetToSide3()
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-    auto d1 = new QtWidgets::DockWidget("d1");
-    auto d2 = new QtWidgets::DockWidget("d2");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
+    auto d2 = new QtWidgets::DockWidget(0, "d2");
     m1->addDockWidgetToSide(d1->asDockWidgetController(), KDDockWidgets::Location_OnRight, InitialVisibilityOption::StartHidden);
     m1->addDockWidgetToSide(d2->asDockWidgetController(), KDDockWidgets::Location_OnRight, InitialVisibilityOption::StartHidden);
 
@@ -2707,19 +2707,19 @@ void TestQtWidgets::addDockWidgetToSide4()
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-    auto dummy1 = new QtWidgets::DockWidget("dummy1");
-    auto dummy2 = new QtWidgets::DockWidget("dummy2");
+    auto dummy1 = new QtWidgets::DockWidget(0, "dummy1");
+    auto dummy2 = new QtWidgets::DockWidget(0, "dummy2");
     m1->addDockWidget(dummy1->asDockWidgetController(), KDDockWidgets::Location_OnRight, nullptr, InitialVisibilityOption::StartHidden);
     m1->addDockWidget(dummy2->asDockWidgetController(), KDDockWidgets::Location_OnLeft, nullptr, InitialVisibilityOption::StartHidden);
 
-    auto leftVisible = new QtWidgets::DockWidget("leftVisible");
-    auto leftHidden = new QtWidgets::DockWidget("leftHidden");
-    auto bottomHidden = new QtWidgets::DockWidget("bottomHidden");
-    auto rightVisible = new QtWidgets::DockWidget("rightVisible");
-    auto leftVisible2 = new QtWidgets::DockWidget("leftVisible2");
-    auto bottomHidden2 = new QtWidgets::DockWidget("bottomHidden2");
-    auto rightHidden = new QtWidgets::DockWidget("rightHidden");
-    auto rightHidden2 = new QtWidgets::DockWidget("rightHidden2");
+    auto leftVisible = new QtWidgets::DockWidget(0, "leftVisible");
+    auto leftHidden = new QtWidgets::DockWidget(0, "leftHidden");
+    auto bottomHidden = new QtWidgets::DockWidget(0, "bottomHidden");
+    auto rightVisible = new QtWidgets::DockWidget(0, "rightVisible");
+    auto leftVisible2 = new QtWidgets::DockWidget(0, "leftVisible2");
+    auto bottomHidden2 = new QtWidgets::DockWidget(0, "bottomHidden2");
+    auto rightHidden = new QtWidgets::DockWidget(0, "rightHidden");
+    auto rightHidden2 = new QtWidgets::DockWidget(0, "rightHidden2");
 
     m1->addDockWidgetToSide(leftVisible->asDockWidgetController(), KDDockWidgets::Location_OnLeft);
     m1->addDockWidgetToSide(leftHidden->asDockWidgetController(), KDDockWidgets::Location_OnLeft, InitialVisibilityOption::StartHidden);
@@ -2744,9 +2744,9 @@ void TestQtWidgets::addDockWidgetToSide5()
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1002, 1002), MainWindowOption_HasCentralGroup, "mw1");
 
-    auto rightVisible = new QtWidgets::DockWidget("rightVisible");
-    auto rightHidden = new QtWidgets::DockWidget("rightHidden");
-    auto rightHidden2 = new QtWidgets::DockWidget("rightHidden2");
+    auto rightVisible = new QtWidgets::DockWidget(0, "rightVisible");
+    auto rightHidden = new QtWidgets::DockWidget(0, "rightHidden");
+    auto rightHidden2 = new QtWidgets::DockWidget(0, "rightHidden2");
 
     m1->addDockWidgetToSide(rightHidden->asDockWidgetController(), KDDockWidgets::Location_OnRight, InitialVisibilityOption::StartHidden);
     m1->addDockWidgetToSide(rightHidden2->asDockWidgetController(), KDDockWidgets::Location_OnRight, InitialVisibilityOption::StartHidden);
@@ -2764,10 +2764,10 @@ void TestQtWidgets::addDockWidgetToSideCrash()
         EnsureTopLevelsDeleted e;
         auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-        auto bottom1 = new QtWidgets::DockWidget("bottom1");
-        auto left1 = new QtWidgets::DockWidget("left1");
-        auto bottom2 = new QtWidgets::DockWidget("bottom2");
-        auto right1 = new QtWidgets::DockWidget("right1");
+        auto bottom1 = new QtWidgets::DockWidget(0, "bottom1");
+        auto left1 = new QtWidgets::DockWidget(0, "left1");
+        auto bottom2 = new QtWidgets::DockWidget(0, "bottom2");
+        auto right1 = new QtWidgets::DockWidget(0, "right1");
 
         m1->addDockWidgetToSide(bottom1->asDockWidgetController(), KDDockWidgets::Location_OnBottom, InitialVisibilityOption::StartHidden);
         m1->addDockWidgetToSide(left1->asDockWidgetController(), KDDockWidgets::Location_OnLeft);
@@ -2790,12 +2790,12 @@ void TestQtWidgets::addDockWidgetToSideCrash()
         EnsureTopLevelsDeleted e;
         auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
 
-        auto dummy1 = new QtWidgets::DockWidget("dummy1");
-        auto dummy2 = new QtWidgets::DockWidget("dummy2");
+        auto dummy1 = new QtWidgets::DockWidget(0, "dummy1");
+        auto dummy2 = new QtWidgets::DockWidget(0, "dummy2");
 
-        auto left1 = new QtWidgets::DockWidget("left1");
-        auto bottom1 = new QtWidgets::DockWidget("bottom1");
-        auto left2 = new QtWidgets::DockWidget("left2");
+        auto left1 = new QtWidgets::DockWidget(0, "left1");
+        auto bottom1 = new QtWidgets::DockWidget(0, "bottom1");
+        auto left2 = new QtWidgets::DockWidget(0, "left2");
 
         m1->addDockWidgetToSide(dummy1->asDockWidgetController(), KDDockWidgets::Location_OnLeft, InitialVisibilityOption::StartHidden);
         m1->addDockWidgetToSide(dummy2->asDockWidgetController(), KDDockWidgets::Location_OnRight, InitialVisibilityOption::StartHidden);
@@ -2808,7 +2808,7 @@ void TestQtWidgets::addDockWidgetToSideCrash()
 void TestQtWidgets::userHiddenButton()
 {
     EnsureTopLevelsDeleted e;
-    auto d1 = new QtWidgets::DockWidget("d1");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
     d1->show();
     auto tb = d1->actualTitleBar();
     auto tbWidget = QtCommon::View_qt::asQWidget(tb->view());
@@ -2843,9 +2843,9 @@ void TestQtWidgets::tst_tabAsCentralWidget()
 
     m->setPersistentCentralView(QtWidgets::ViewWrapper::create(tabWidget));
 
-    auto d1 = new QtWidgets::DockWidget("d1");
-    auto d2 = new QtWidgets::DockWidget("d2");
-    auto d3 = new QtWidgets::DockWidget("d3");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
+    auto d2 = new QtWidgets::DockWidget(0, "d2");
+    auto d3 = new QtWidgets::DockWidget(0, "d3");
     m->addDockWidget(d1->dockWidget(), KDDockWidgets::Location_OnRight);
     m->addDockWidget(d2->dockWidget(), KDDockWidgets::Location_OnRight);
     m->addDockWidget(d3->dockWidget(), KDDockWidgets::Location_OnRight);
@@ -2869,8 +2869,8 @@ void TestQtWidgets::tst_crashDuringRestore()
 
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
-    auto d1 = new QtWidgets::DockWidget("d1");
-    auto d3 = new QtWidgets::DockWidget("d3");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
+    auto d3 = new QtWidgets::DockWidget(0, "d3");
     m1->addDockWidget(d1->asDockWidgetController(), Location_OnRight);
     d1->addDockWidgetAsTab(d3);
 
@@ -2878,7 +2878,7 @@ void TestQtWidgets::tst_crashDuringRestore()
         d3->open();
     });
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     const QByteArray saved = saver.serializeLayout();
 
     saver.restoreLayout(saved);
@@ -2889,7 +2889,7 @@ void TestQtWidgets::tst_toggleVsShowHidden()
     // Tests that the QAction doesn't fire when adding as hidden
     EnsureTopLevelsDeleted e;
     auto m1 = createMainWindow(QSize(1000, 1000), MainWindowOption_HasCentralGroup, "mw1");
-    auto d1 = new QtWidgets::DockWidget("d1");
+    auto d1 = new QtWidgets::DockWidget(0, "d1");
     QVERIFY(!d1->toggleAction()->isChecked());
     QVERIFY(!d1->isOpen());
     int count = 0;
@@ -2912,10 +2912,10 @@ void TestQtWidgets::tst_neighbourSqueezeStrategy()
         InitialOption::s_defaultNeighbourSqueezeStrategy = NeighbourSqueezeStrategy::ImmediateNeighboursFirst;
         auto m1 = createMainWindow(QSize(1000, 500), {}, "mw1");
 
-        auto d1 = new QtWidgets::DockWidget("d1");
-        auto d2 = new QtWidgets::DockWidget("d2");
-        auto d3 = new QtWidgets::DockWidget("d3");
-        auto d4 = new QtWidgets::DockWidget("d4");
+        auto d1 = new QtWidgets::DockWidget(0, "d1");
+        auto d2 = new QtWidgets::DockWidget(0, "d2");
+        auto d3 = new QtWidgets::DockWidget(0, "d3");
+        auto d4 = new QtWidgets::DockWidget(0, "d4");
 
         m1->addDockWidget(d1->dockWidget(), KDDockWidgets::Location_OnRight);
         m1->addDockWidget(d2->dockWidget(), KDDockWidgets::Location_OnRight);
@@ -2970,8 +2970,8 @@ void TestQtWidgets::tst_addDockWidgetToContainingWindowNested()
         EnsureTopLevelsDeleted e;
 
         auto m1 = createMainWindow(QSize(1000, 500), {}, "mw1");
-        auto d1 = new QtWidgets::DockWidget("d1");
-        auto d2 = new QtWidgets::DockWidget("d2");
+        auto d1 = new QtWidgets::DockWidget(0, "d1");
+        auto d2 = new QtWidgets::DockWidget(0, "d2");
 
         m1->addDockWidget(d1->dockWidget(), Location_OnRight);
         d1->dockWidget()->addDockWidgetToContainingWindow(d2->dockWidget(), KDDockWidgets::Location_OnLeft);
@@ -2987,15 +2987,15 @@ void TestQtWidgets::tst_addDockWidgetToContainingWindowNested()
         auto m1 = createMainWindow(QSize(1000, 500), {}, "mw1");
         auto nestedMainWindow = createMainWindow(QSize(1000, 500), {}, "mw2");
 
-        auto d1 = new KDDockWidgets::QtWidgets::DockWidget(QStringLiteral("Nested MainWindow Dock container"));
+        auto d1 = new KDDockWidgets::QtWidgets::DockWidget(0, QStringLiteral("Nested MainWindow Dock container"));
         auto nestedMainWindowQWidget = static_cast<QMainWindow *>(QtCommon::View_qt::asQWidget(nestedMainWindow->view()));
         d1->setWidget(nestedMainWindowQWidget);
         m1->addDockWidget(d1->asDockWidgetController(), Location_OnBottom);
 
-        auto d2 = new QtWidgets::DockWidget("d2");
+        auto d2 = new QtWidgets::DockWidget(0, "d2");
         nestedMainWindow->addDockWidget(d2->dockWidget(), Location_OnRight);
 
-        auto d3 = new QtWidgets::DockWidget("d3");
+        auto d3 = new QtWidgets::DockWidget(0, "d3");
         d2->dockWidget()->addDockWidgetToContainingWindow(d3->dockWidget(), Location_OnRight);
 
         QVERIFY(d1->dockWidget()->isInMainWindow());
@@ -3019,8 +3019,8 @@ void TestQtWidgets::tst_tabBarIcons()
                         | KDDockWidgets::Config::Flag_CloseOnlyCurrentTab
                         | KDDockWidgets::Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden);
 
-        auto d1 = new QtWidgets::DockWidget("d1", KDDockWidgets::DockWidgetOption_NotClosable);
-        auto d2 = new QtWidgets::DockWidget("d2", KDDockWidgets::DockWidgetOption_NotClosable);
+        auto d1 = new QtWidgets::DockWidget(0, "d1", KDDockWidgets::DockWidgetOption_NotClosable);
+        auto d2 = new QtWidgets::DockWidget(0, "d2", KDDockWidgets::DockWidgetOption_NotClosable);
 
         d1->addDockWidgetAsTab(d2);
 
@@ -3044,8 +3044,8 @@ void TestQtWidgets::tst_tabBarIcons()
                         | KDDockWidgets::Config::Flag_ShowButtonsOnTabBarIfTitleBarHidden);
         config.setViewFactory(new ViewFactory464());
 
-        auto d1 = new QtWidgets::DockWidget("d1", KDDockWidgets::DockWidgetOption_NotClosable);
-        auto d2 = new QtWidgets::DockWidget("d2", KDDockWidgets::DockWidgetOption_NotClosable);
+        auto d1 = new QtWidgets::DockWidget(0, "d1", KDDockWidgets::DockWidgetOption_NotClosable);
+        auto d2 = new QtWidgets::DockWidget(0, "d2", KDDockWidgets::DockWidgetOption_NotClosable);
 
         d1->addDockWidgetAsTab(d2);
 
@@ -3070,7 +3070,7 @@ void TestQtWidgets::tst_indicatorsNotShowing()
     auto m1 = createMainWindow(QSize(1000, 500), {}, "mw1");
     auto m2 = createMainWindow(QSize(1000, 500), {}, "mw2");
     // m2->setAffinities({ "m2" });
-    auto d2 = new QtWidgets::DockWidget("d2");
+    auto d2 = new QtWidgets::DockWidget(0, "d2");
     // d2->setAffinities({ "m2" });
     d2->show();
     QTest::qWait(200);
@@ -3109,16 +3109,16 @@ void TestQtWidgets::tst_restoreInvalidPercentages()
     createDockWidget("_kddw_internal_dummy", Platform::instance()->tests_createView({ true }));
     createDockWidget("_kddw_internal_dummy2", Platform::instance()->tests_createView({ true }));
     for (int i = 0; i <= 8; ++i) {
-        new QtWidgets::DockWidget(QStringLiteral("dockwidget_tests_%1").arg(i));
+        new QtWidgets::DockWidget(0, QStringLiteral("dockwidget_tests_%1").arg(i));
     }
 
     bool ok = false;
-    LayoutSaver restorer;
+    LayoutSaver restorer(0);
     const QByteArray data = Platform::instance()->readFile(":/layouts/invalidPercentages.json", /*by-ref*/ ok);
     QVERIFY(ok);
     QVERIFY(restorer.restoreLayout(data));
 
-    LayoutSaver saver;
+    LayoutSaver saver(0);
     QVERIFY(!saver.serializeLayout().isEmpty());
 }
 
