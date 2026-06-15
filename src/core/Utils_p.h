@@ -91,17 +91,14 @@ inline bool linksToXLib()
 
 inline bool usesQTBUG83030Workaround(int ctx)
 {
-    const bool useWorkaround =
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-        // Bug is fixed in 6.7
-        false;
+    // Bug is fixed in 6.7
+    KDDW_UNUSED(ctx);
+    return false;
 #else
-        // Workaround by default, unless explicitly told not to
-        !(Config::self(ctx).internalFlags() & Config::InternalFlag_NoDeleteLaterWorkaround);
+    // Workaround by default, unless explicitly told not to
+    return !(Config::self(ctx).internalFlags() & Config::InternalFlag_NoDeleteLaterWorkaround);
 #endif
-
-    return useWorkaround;
 }
 
 inline bool isNormalWindowState(WindowStates states)

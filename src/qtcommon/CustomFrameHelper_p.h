@@ -25,7 +25,7 @@ class DOCKS_EXPORT CustomFrameHelper : public QObject, public QAbstractNativeEve
     Q_OBJECT
 public:
     typedef WidgetResizeHandler::NativeFeatures (*ShouldUseCustomFrame)(Core::Window::Ptr);
-    explicit CustomFrameHelper(ShouldUseCustomFrame shouldUseCustomFrameFunc,
+    explicit CustomFrameHelper(ShouldUseCustomFrame shouldUseCustomFrameFunc, int ctx,
                                QObject *parent = nullptr);
     ~CustomFrameHelper() override;
 
@@ -40,6 +40,7 @@ private:
     bool m_inDtor = false;
     ShouldUseCustomFrame m_shouldUseCustomFrameFunc = nullptr;
     bool m_recursionGuard = false;
+    const int m_ctx = 0;
 };
 
 }
