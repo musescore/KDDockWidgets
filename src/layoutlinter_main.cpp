@@ -126,7 +126,7 @@ static bool lint(const QString &filename, LinterConfig config, bool isVerbose)
             mainWindow->view()->show();
     }
 
-    LayoutSaver restorer(0,0, config.restoreOptions);
+    LayoutSaver restorer(0, config.restoreOptions);
     return restorer.restoreFromFile(filename);
 }
 

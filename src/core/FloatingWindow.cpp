@@ -168,7 +168,7 @@ FloatingWindow::FloatingWindow(int ctx, Rect suggestedGeometry, MainWindow *pare
         qGuiApp->installNativeEventFilter(m_nchittestFilter);
 
         // Enables native drop-shadow
-        WidgetResizeHandler::setupWindow(view()->window());
+        WidgetResizeHandler::setupWindow(view()->window(), ctx);
 
         // WM_NCCALCSIZE is handled in the views's nativeEvent(), not here.
     }

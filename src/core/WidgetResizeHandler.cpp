@@ -371,7 +371,7 @@ bool WidgetResizeHandler::handleWindowsNativeEvent(Core::FloatingWindow *fw,
 
     auto msg = static_cast<MSG *>(message);
     if (msg->message == WM_NCHITTEST) {
-        if (DragController::instance(m_ctx)->isInClientDrag()) {
+        if (DragController::instance(fw->ctx())->isInClientDrag()) {
             // There's a non-native drag going on.
             *result = 0;
             return false;
@@ -383,7 +383,7 @@ bool WidgetResizeHandler::handleWindowsNativeEvent(Core::FloatingWindow *fw,
         fw->setLastHitTest(*result);
         return ret;
     } else if (msg->message == WM_NCLBUTTONDBLCLK) {
-        if ((Config::self(m_ctx).flags() & Config::Flag_DoubleClickMaximizes)) {
+        if ((Config::self(fw->ctx()).flags() & Config::Flag_DoubleClickMaximizes)) {
             return handleWindowsNativeEvent(fw->view()->window(), msg, result, {});
         } else {
             // Let the title bar handle it. It will re-dock the window.
@@ -669,7 +669,7 @@ CursorPosition WidgetResizeHandler::cursorPosition(Point globalPos) const
 }
 
 /** static */
-void WidgetResizeHandler::setupWindow(Core::Window::Ptr window)
+void WidgetResizeHandler::setupWindow(Core::Window::Ptr window, int ctx)
 {
     // Does some minor setup on our QWindow.
     // Like adding the drop shadow on Windows and two other workarounds.
@@ -685,7 +685,7 @@ void WidgetResizeHandler::setupWindow(Core::Window::Ptr window)
         });
 
         const bool usesTransparentFloatingWindow =
-            Config::self(m_ctx).internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow;
+            Config::self(ctx).internalFlags() & Config::InternalFlag_UseTransparentFloatingWindow;
         if (!usesTransparentFloatingWindow) {
             // This enables the native drop shadow.
             // Doesn't work well if the floating window has transparent round corners (shows weird
@@ -697,6 +697,7 @@ void WidgetResizeHandler::setupWindow(Core::Window::Ptr window)
     }
 #else
     KDDW_UNUSED(window);
+    KDDW_UNUSED(ctx);
 #endif // Q_OS_WIN
 }
 

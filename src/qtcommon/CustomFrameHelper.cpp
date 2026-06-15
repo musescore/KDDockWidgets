@@ -36,9 +36,10 @@ Window::Ptr windowForHandle(WId id)
 }
 #endif
 
-CustomFrameHelper::CustomFrameHelper(ShouldUseCustomFrame func, QObject *parent)
+CustomFrameHelper::CustomFrameHelper(ShouldUseCustomFrame func, int ctx, QObject *parent)
     : QObject(parent)
     , m_shouldUseCustomFrameFunc(func)
+    , m_ctx(ctx)
 {
 #if defined(KDDW_FRONTEND_QT_WINDOWS)
     qGuiApp->installNativeEventFilter(this);
@@ -53,7 +54,7 @@ CustomFrameHelper::~CustomFrameHelper()
 void CustomFrameHelper::applyCustomFrame(Core::Window::Ptr window)
 {
 #ifdef KDDW_FRONTEND_QT_WINDOWS
-    WidgetResizeHandler::setupWindow(window);
+    WidgetResizeHandler::setupWindow(window, m_ctx);
 #else
     KDDW_UNUSED(window);
     KDDW_ERROR("Not implemented on this platform");
@@ -96,7 +97,7 @@ bool CustomFrameHelper::nativeEventFilter(const QByteArray &eventType, void *mes
     const bool setupRan = windowQt->property(propertyName).toBool();
     if (!setupRan) {
         // Add drop shadow
-        WidgetResizeHandler::setupWindow(window);
+        WidgetResizeHandler::setupWindow(window, m_ctx);
         windowQt->setProperty(propertyName, true);
     }
 
