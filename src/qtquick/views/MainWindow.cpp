@@ -69,6 +69,8 @@ MainWindow::MainWindow(int ctx, const QString &uniqueName, MainWindowOptions opt
     auto layoutView = asView_qtquick(lw->view());
     makeItemFillParent(layoutView);
 
+    QQuickItem::window()->installEventFilter(this);
+
     // MainWindowQuick has the same constraints as Layout, so just forward the signal
     d->layoutGeometryChangedConnection = connect(layoutView, &View::geometryUpdated, this,
                                                  [this] {
