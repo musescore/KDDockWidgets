@@ -196,6 +196,15 @@ void DropArea::addDockWidget(Core::DockWidget *dw, Location location,
 
     Core::Group *relativeToGroup = relativeTo ? relativeTo->d->group() : nullptr;
     Core::Item *relativeToItem = relativeToGroup ? relativeToGroup->layoutItem() : nullptr;
+
+    if (relativeTo && !relativeToItem) {
+        // relative item is hidden, so it has no group, anchor to its placeholder item instead
+        if (Core::Item *placeholder = relativeTo->d->lastPosition()->lastItem()) {
+            if (placeholder->host() == asLayoutingHost())
+                relativeToItem = placeholder;
+        }
+    }
+
     _addDockWidget(dw, location, relativeToItem, option);
 }
 
