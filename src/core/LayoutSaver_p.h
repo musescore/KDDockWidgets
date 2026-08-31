@@ -49,7 +49,8 @@ enum class InternalRestoreOption {
     None = 0,
     SkipMainWindowGeometry = 1, ///< Don't reposition the main window's geometry when restoring.
     RelativeFloatingWindowGeometry =
-        2 ///< FloatingWindow's are repositioned relatively to the new MainWindow's size
+        2, ///< FloatingWindow's are repositioned relatively to the new MainWindow's size
+    SkipMainWindowVisibility = 4 ///< Don't show/hide the main window according to the saved layout.
 };
 Q_DECLARE_FLAGS(InternalRestoreOptions, InternalRestoreOption)
 
@@ -337,7 +338,7 @@ public:
     void floatUnknownWidgets(const LayoutSaver::Layout &layout);
 
     template<typename T>
-    void deserializeWindowGeometry(const T &saved, Core::Window::Ptr);
+    void deserializeWindowGeometry(const T &saved, Core::Window::Ptr, bool applyVisibility = true);
     void deleteEmptyGroups() const;
     void clearRestoredProperty();
 
