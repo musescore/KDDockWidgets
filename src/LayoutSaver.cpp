@@ -81,6 +81,10 @@ static InternalRestoreOptions internalRestoreOptions(RestoreOptions options)
         ret.setFlag(InternalRestoreOption::RelativeFloatingWindowGeometry, false);
         options.setFlag(RestoreOption_AbsoluteFloatingDockWindows, false);
     }
+    if (options.testFlag(RestoreOption_SkipMainWindowVisibility)) {
+        ret.setFlag(InternalRestoreOption::SkipMainWindowVisibility);
+        options.setFlag(RestoreOption_SkipMainWindowVisibility, false);
+    }
 
     if (options != RestoreOption_None) {
         KDDW_ERROR("Unknown options={}", int(options));
@@ -549,7 +553,8 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
                 window->setWindowState(WindowState::None);
             }
 
-            d->deserializeWindowGeometry(mw, window);
+            const bool applyVisibility = !(d->m_restoreOptions & InternalRestoreOption::SkipMainWindowVisibility);
+            d->deserializeWindowGeometry(mw, window, applyVisibility);
             window->setWindowState(mw.windowState);
         }
 
@@ -646,7 +651,7 @@ void LayoutSaver::Private::clearRestoredProperty()
 }
 
 template<typename T>
-void LayoutSaver::Private::deserializeWindowGeometry(const T &saved, Window::Ptr window)
+void LayoutSaver::Private::deserializeWindowGeometry(const T &saved, Window::Ptr window, bool applyVisibility)
 {
     // Not simply calling QWidget::setGeometry() here.
     // For QtQuick we need to modify the QWindow's geometry.
@@ -673,7 +678,9 @@ void LayoutSaver::Private::deserializeWindowGeometry(const T &saved, Window::Ptr
     Core::FloatingWindow::ensureRectIsOnScreen(geometry);
 
     window->setGeometry(geometry);
-    window->setVisible(saved.isVisible);
+    if (applyVisibility) {
+        window->setVisible(saved.isVisible);
+    }
 }
 
 LayoutSaver::Private::Private(int ctx, RestoreOptions options)
